@@ -9,4 +9,5 @@ Simulation using matplotlib, with different walk gaits
 Demo mode: python 2-sim-poses-with-walk.py d  
 
 3-sim-with-controller:  
-Controllable wit Xbox-Controller for basic poses
+Controllable with Xbox-Controller for basic poses, no walk yet
+
