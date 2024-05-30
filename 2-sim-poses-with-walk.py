@@ -144,16 +144,17 @@ class SpotMicro:
         if gait == "wave":
             phase_time = total_time / 4
             offsets = [2 * phase_time, 1 * phase_time, 3 * phase_time, 0 * phase_time]
-            
             return offsets
         elif gait == "trot":
-            offsets = [0, total_time / 2, 0, total_time / 2]
+            phase_time = total_time / 2
+            offsets = [0 * phase_time, 1 * phase_time, 2 * phase_time, 3 * phase_time]
             return offsets
         elif gait == "pace":
             phase_time = total_time / 2
             offsets = [0, 0, phase_time, phase_time]
             return offsets
         elif gait == "gallop":
+            # just dreaming ...
             phase_time = total_time / 4
             offsets = [0, 0, phase_time, phase_time]
             return offsets
@@ -225,9 +226,25 @@ def demo():
     swing_heights = [0.03, 0.03, 0.03, 0.03]
     swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
 
-    print("Wave Gait")
+    print("Wave Gait - most stable")
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
     plt.pause(1)
+    
+    print("Trot Gait - second stable")
+    swing_time_ratios = [0.5, 0.5, 0.5, 0.5]
+    walker.walk(total_time, repetitions, radii, steps, "trot", overlap_times, swing_heights, swing_time_ratios)
+    plt.pause(1)
+    
+    print("Pace Gait")
+    swing_time_ratios = [0.5, 0.5, 0.5, 0.5]
+    walker.walk(total_time, repetitions, radii, steps, "pace", overlap_times, swing_heights, swing_time_ratios)
+    plt.pause(1)
+    
+    print("Gallop Gait")
+    swing_time_ratios = [0.5, 0.5, 0.5, 0.5]
+    walker.walk(total_time, repetitions, radii, steps, "gallop", overlap_times, swing_heights, swing_time_ratios)
+    plt.pause(1)
+
     
     print("roll, pitch, yaw")
     roll = 17
