@@ -5,4 +5,8 @@ yet another robodog
 Simulation using matplotlib, basic tests posing only
 
 2-sim-poses-with-walk:  
-Simulation using matplotlib, with different walk gaits
+Simulation using matplotlib, with different walk gaits  
+Demo mode: python 2-sim-poses-with-walk.py d  
+
+3-sim-with-controller:  
+Controllable wit Xbox-Controller  
