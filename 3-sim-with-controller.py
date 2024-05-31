@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import time
 from math import pi
 from spot_micro_kinematics_python.utilities import spot_micro_kinematics as smk
+
 from spot_micro_kinematics_python.spot_micro_stick_figure import SpotMicroStickFigure
 from pyPS4Controller.controller import Controller
 import threading
@@ -81,14 +82,15 @@ class SpotMicro:
 
     def print_angles(self, arr):
         deg_arr = tuple(tuple(round(value * self.kinematics.r2d) for value in inner_array) for inner_array in arr)
+        '''
         print("leg_rightback:  ", deg_arr[0])
         print("leg_rightfront: ", deg_arr[1])
         print("leg_leftfront:  ", deg_arr[2])
         print("leg_leftback:   ", deg_arr[3])
-
+        '''
     def set_current_angles(self, moving_time, steps, angles_arr, pitch):
         current_angles = self.get_current_angles()
-        print("Vorher")
+        #print("Vorher")
         self.print_angles(current_angles)
         target_angles = [
             [angles_arr[0][0] * self.kinematics.d2r, -angles_arr[0][1] * self.kinematics.d2r,  angles_arr[0][2] * self.kinematics.d2r],
@@ -113,9 +115,9 @@ class SpotMicro:
             mypoints = [coords[0][3], coords[1][3], coords[2][3], coords[3][3]]
             self.anim(mypoints, pitch)
 
-        print("Nachher")
+        #print("Nachher")
         self.print_angles(self.get_current_angles())
-        print("########")
+        #print("########")
 
     def get_current_angles(self):
         return self.kinematics.sm.get_leg_angles()
@@ -147,6 +149,7 @@ class SpotMicro:
                                 
         coords = self.get_current_coords()
         self.update_lines(coords)
+        
        
         
     # --------- walk ---------
@@ -204,17 +207,16 @@ class SpotMicro:
         return start_pos + (end_pos - start_pos) * (t / T), 0
 
     def walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios):
-        #leg_names = ['rear_right', 'front_right', 'front_left', 'rear_left']
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
         
         positions = {}
-        
         start_time_offsets = self.calculate_start_time_offsets(total_time, gait_pattern)
 
         for i, leg_name in enumerate(leg_names):
             positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, total_time, radii[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
 
         for _ in range(repetitions):
+            start_time = time.time()
             for step in range(steps):
                 mypoints = []
                 for i, leg_name in enumerate(leg_names):
@@ -225,7 +227,10 @@ class SpotMicro:
                     mypoints.append(new_point)
 
                 self.anim(mypoints, pitch=10.0)
-                time.sleep(total_time / steps)
+                elapsed = time.time() - start_time
+                time.sleep(max(0, total_time / steps - elapsed))
+                start_time = time.time()
+
                 
     def demo(self):
         total_time = 1 
@@ -337,12 +342,24 @@ class SpotMicro:
         #plt.pause(10)
 
 
+
 class MyController(Controller):
     def __init__(self, **kwargs):
         Controller.__init__(self, **kwargs)
         self.pitch = 0
         self.yaw = 0
         self.roll = 0
+        
+        self.state = {
+            'stand': True,
+            'sit': False,
+            'rest': False,
+            'walk': False,
+            'greet': False,
+            'pee': False,
+            'pushups': False,
+            'twist': False,
+        }
 
     def set_walker(self, walker):
         self.walker = walker
@@ -353,38 +370,111 @@ class MyController(Controller):
         self.walker.twist(self.roll, self.pitch, self.yaw)
         #self.walker.demo()
     '''
+    
+    def on_triangle_press(self):
+        print('walk',self.state['walk'])
+        if not self.state['walk']:
+            total_time = 1 
+            repetitions = 111
+            steps = 15
+            radii = [0.045, 0.045, 0.045, 0.045] 
+            overlap_times = [0.0, 0.0, 0.0, 0.0]
+            swing_heights = [0.03, 0.03, 0.03, 0.03]
+            swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
+            self.walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
+        else:
+            self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
+        self.state['walk'] = not self.state['walk']  
+        
     def on_circle_press(self):
-        #rest
-        angles = [[0, 80, 135], [0, 80, 135], [0, 80, 135], [0, 80, 135]]
-        moving_time = 1
-        steps = 20
-        pitch = 5
-        self.walker.pose(moving_time, steps, angles, pitch)
-   
+        # Stand
+        if not self.state['stand']:
+            angles = [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]]
+            
+            moving_time = 0.5
+            steps = 20
+            pitch = 5
+            self.walker.pose(moving_time, steps, angles, pitch)
+        else:
+            self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
+        self.state['stand'] = not self.state['stand']  
+        
     def on_square_press(self):
         #sit
-        angles = [[0, 80, 135], [0, 35, 60], [0, 35, 60], [0, 80, 135]]
-        moving_time = 1
-        steps = 20
-        pitch = 5
-        self.walker.pose(moving_time, steps, angles, pitch)
+        if not self.state['sit']:
+            angles = [[0, 80, 135], [0, 35, 60], [0, 35, 60], [0, 80, 135]]
+            moving_time = 1
+            steps = 20
+            pitch = 5
+            self.walker.pose(moving_time, steps, angles, pitch)
+        else:
+            self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
+        self.state['sit'] = not self.state['sit']
         
-    def on_triangle_press(self):
-        angles = [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]]
-        moving_time = 0.5
-        steps = 20
-        pitch = 5
-        self.walker.pose(moving_time, steps, angles, pitch)
-    
     def on_x_press(self):
-            print("on_x_Press")
-            os._exit(1)
-
+        #rest
+        if not self.state['rest']:
+            angles = [[0, 80, 135], [0, 80, 135], [0, 80, 135], [0, 80, 135]]
+            moving_time = 1
+            steps = 20
+            pitch = 5
+            self.walker.pose(moving_time, steps, angles, pitch)
+        else:
+            self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
+        self.state['rest'] = not self.state['rest']
+        
     
+    
+    def on_L3_up(self, value):
+        pass
+    
+    def on_R3_up(self, value):
+        pass
+        
+    def on_R3_down(self, value):
+        pass
+        
+    def on_L3_down(self, value):
+        pass
+        
+    def on_L3_right(self, value):
+        pass
+        
+    def on_R3_right(self, value):
+        pass
+    
+    def on_L3_left(self, value):
+        pass
+    
+    def on_R3_y_at_rest(self):
+        pass
+        
+    def on_L3_x_at_rest(self):
+        pass
+           
+    def on_L3_y_at_rest(self):
+        pass
+        
+    def on_R3_y_at_rest(self):
+        pass
+        
+        
+    
+    def on_playstation_button_release(self):
+        os._exit(1)
+  
+def run_controller_listen(controller):
+    controller.listen(timeout=60)
+        
+'''
 def run_controller(walker):
     controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
     controller.set_walker(walker)
-    controller.listen(timeout=60)
+    controller_thread = threading.Thread(target=run_controller_listen, args=(controller,))
+    controller_thread.start()
+
+    #controller.listen(timeout=60)
+'''    
     
 def main():
     fig = plt.figure()
@@ -398,21 +488,31 @@ def main():
         if arg == "d":
             walker.demo()
     else:
+        
         #controller_thread = threading.Thread(target=run_controller, args=(walker,))
         #controller_thread.start()
-
+        ps4_controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
+        ps4_controller.set_walker(walker)
+        controller_thread = threading.Thread(target=ps4_controller.listen, daemon=True)
+        controller_thread.start()
         walker.initplot()
-        run_controller(walker)
-          
-     
         
-        #while controller_thread.is_alive():
-        #   plt.pause(0.1)
-        #   ax.figure.canvas.flush_events()
-      
+        print ("          A: walk")
+        print ("[]: sit              O: stand")
+        print ("          X: rest")
+        print ("-----------------------------")
+        print ("          up: faster")
+        print ("<-: left            ->: right")
+        print ("        down: slower")
+        print ("-----------------------------")
+        print ("        P: exit")
+        
+        ###run_controller(walker)
+         
+        while True:
+            plt.pause(0.01)         
+
+        
 if __name__ == "__main__":
      
     main()
-
-        
-
