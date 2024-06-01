@@ -11,7 +11,8 @@ from spot_micro_kinematics_python.utilities import spot_micro_kinematics as smk
 from spot_micro_kinematics_python.spot_micro_stick_figure import SpotMicroStickFigure
 from pyPS4Controller.controller import Controller
 import threading
-
+import queue
+event_queue = queue.Queue()
 plt.ion()
 
 class SpotMicroKinematics:
@@ -40,7 +41,7 @@ class SpotMicro:
         self.ax.set_ylabel('Z')
         self.ax.set_zlabel('Y')
         self.lines = self.init_lines(coords)
-        self.stopwalk = False
+        self.stopwalk = True
         
     def init_lines(self, coords):
         lines = []
@@ -218,9 +219,10 @@ class SpotMicro:
         for i, leg_name in enumerate(leg_names):
             positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, total_time, radii[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
 
-        for _ in range(repetitions):  
-            if self.stopwalk == True:
-                continue
+        for n in range(repetitions):
+            if self.stopwalk:
+                break
+            print (n)            
             start_time = time.time()
             for step in range(steps):
                 mypoints = []
@@ -349,8 +351,11 @@ class SpotMicro:
 
 
 class MyController(Controller):
-    def __init__(self, **kwargs):
-        Controller.__init__(self, **kwargs)
+    def __init__(self, walker, interface, connecting_using_ds4drv):
+        self.walker = walker
+        super().__init__(interface=interface, connecting_using_ds4drv=connecting_using_ds4drv)
+    
+    
         self.pitch = 0
         self.yaw = 0
         self.roll = 0
@@ -366,8 +371,6 @@ class MyController(Controller):
             'twist': False,
         }
 
-    def set_walker(self, walker):
-        self.walker = walker
     
     '''    
     def on_square_press(self):
@@ -377,20 +380,24 @@ class MyController(Controller):
     '''
     
     def on_triangle_press(self):
-        self.walker.stopwalk =  self.walker.stopwalk 
-        print('walk',self.state['walk'])
+        print ("on_triangle_press")
+        
         if not self.state['walk']:
-            total_time = 1 
-            repetitions = 111
-            steps = 15
-            radii = [0.045, 0.045, 0.045, 0.045] 
-            overlap_times = [0.0, 0.0, 0.0, 0.0]
-            swing_heights = [0.03, 0.03, 0.03, 0.03]
-            swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-            self.walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
+            event_queue.put("triangle")
+        
+            self.walker.stopwalk = not self.walker.stopwalk
+            #time.sleep(1)   
+            #self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
         else:
+        
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
-        self.state['walk'] = not self.state['walk']  
+            self.state['walk'] = not self.state['walk'] 
+        
+        
+    
+    def on_triangle_release(self):
+        pass
+        
         
     def on_circle_press(self):
         # Stand
@@ -463,18 +470,25 @@ class MyController(Controller):
         
     def on_R3_y_at_rest(self):
         pass
-        
-        
     
+    def on_R3_left(self, value):
+        pass
+        
+    def on_R3_x_at_rest(self):
+        pass
+        
     def on_playstation_button_release(self):
         os._exit(1)
  
+ 
+def start_controller(walker, c):
+    controller = c
+    controller.listen()
     
 def main():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     walker = SpotMicro(ax)
-    
     
     if len(sys.argv) == 2:
         arg = sys.argv[1]
@@ -482,11 +496,8 @@ def main():
         if arg == "d":
             walker.demo()
     else:
-        
-        ps4_controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
-        ps4_controller.set_walker(walker)
-        controller_thread = threading.Thread(target=ps4_controller.listen, daemon=True)
-        #controller_thread = threading.Thread(target=ps4_controller.listen(timeout=60))
+        controller = MyController(walker=walker, interface="/dev/input/js0",               connecting_using_ds4drv=False)
+        controller_thread = threading.Thread(target=start_controller, args=(walker,controller))
         controller_thread.start()
         walker.initplot()
         
@@ -501,9 +512,25 @@ def main():
         print ("        P: exit")
          
         while True:
-            plt.pause(0.01)         
+            if not event_queue.empty():
+                event = event_queue.get()
+                if event == "triangle":
+                    print("Processing triangle button event", controller.state['walk'])
+                    
+                    print("self.walker.stopwalk:",walker.stopwalk)
+                    print("state:",'walk',controller.state['walk'])
 
-        
+                    
+                    total_time = 1 
+                    repetitions = 111
+                    steps = 15
+                    radii = [0.045, 0.045, 0.045, 0.045] 
+                    overlap_times = [0.0, 0.0, 0.0, 0.0]
+                    swing_heights = [0.03, 0.03, 0.03, 0.03]
+                    swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
+                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
+            
+            plt.pause(0.01)        
+
 if __name__ == "__main__":
-     
     main()
