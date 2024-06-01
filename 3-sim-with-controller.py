@@ -1,6 +1,8 @@
 import os
 import sys
 import numpy as np
+import matplotlib
+matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 import time
 from math import pi
@@ -38,7 +40,8 @@ class SpotMicro:
         self.ax.set_ylabel('Z')
         self.ax.set_zlabel('Y')
         self.lines = self.init_lines(coords)
-
+        self.stopwalk = False
+        
     def init_lines(self, coords):
         lines = []
         for i in range(4):
@@ -215,7 +218,9 @@ class SpotMicro:
         for i, leg_name in enumerate(leg_names):
             positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, total_time, radii[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
 
-        for _ in range(repetitions):
+        for _ in range(repetitions):  
+            if self.stopwalk == True:
+                continue
             start_time = time.time()
             for step in range(steps):
                 mypoints = []
@@ -372,6 +377,7 @@ class MyController(Controller):
     '''
     
     def on_triangle_press(self):
+        self.walker.stopwalk =  self.walker.stopwalk 
         print('walk',self.state['walk'])
         if not self.state['walk']:
             total_time = 1 
@@ -462,19 +468,7 @@ class MyController(Controller):
     
     def on_playstation_button_release(self):
         os._exit(1)
-  
-def run_controller_listen(controller):
-    controller.listen(timeout=60)
-        
-'''
-def run_controller(walker):
-    controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
-    controller.set_walker(walker)
-    controller_thread = threading.Thread(target=run_controller_listen, args=(controller,))
-    controller_thread.start()
-
-    #controller.listen(timeout=60)
-'''    
+ 
     
 def main():
     fig = plt.figure()
@@ -489,11 +483,10 @@ def main():
             walker.demo()
     else:
         
-        #controller_thread = threading.Thread(target=run_controller, args=(walker,))
-        #controller_thread.start()
         ps4_controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
         ps4_controller.set_walker(walker)
         controller_thread = threading.Thread(target=ps4_controller.listen, daemon=True)
+        #controller_thread = threading.Thread(target=ps4_controller.listen(timeout=60))
         controller_thread.start()
         walker.initplot()
         
@@ -506,8 +499,6 @@ def main():
         print ("        down: slower")
         print ("-----------------------------")
         print ("        P: exit")
-        
-        ###run_controller(walker)
          
         while True:
             plt.pause(0.01)         
