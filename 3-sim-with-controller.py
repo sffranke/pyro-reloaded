@@ -41,7 +41,7 @@ class SpotMicro:
         self.ax.set_ylabel('Z')
         self.ax.set_zlabel('Y')
         self.lines = self.init_lines(coords)
-        self.stopwalk = True
+        self.stopwalk = False
         
     def init_lines(self, coords):
         lines = []
@@ -143,6 +143,8 @@ class SpotMicro:
         self.pose(moving_time, steps, angles, pitch)
 
     def pose(self, moving_time, steps, leg_angles, pitch):
+        self.stopwalk = not self.stopwalk
+        time.sleep(1)
         self.set_current_angles(moving_time, steps, leg_angles, pitch)
         
     def twist(self, roll, pitch, yaw):
@@ -386,14 +388,47 @@ class MyController(Controller):
             event_queue.put("triangle")
         
             self.walker.stopwalk = not self.walker.stopwalk
-            #time.sleep(1)   
-            #self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
+           
         else:
         
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
             self.state['walk'] = not self.state['walk'] 
         
         
+    '''
+    on_up_arrow_press
+    on_up_down_arrow_release
+    on_down_arrow_press
+    on_up_down_arrow_release
+    on_left_arrow_press
+    on_left_right_arrow_release
+    on_right_arrow_press
+    on_left_right_arrow_release
+    '''
+    def on_up_down_arrow_release(self):
+        pass
+
+    def on_left_right_arrow_release(self):
+        pass   
+     
+    def on_up_arrow_press(self):
+        # speed up
+        pass
+        
+    def on_up_arrow_press(self):
+        # speed down
+        print ("on_up_arrow_press")
+        
+        if not self.state['walk']:
+           return
+    
+    def on_right_arrow_press(self):
+        # turn right
+        pass
+        
+    def on_up_arrow_press(self):
+        # turn left
+        pass
     
     def on_triangle_release(self):
         pass
