@@ -217,17 +217,23 @@ class SpotMicro:
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
         
         self.total_time = total_time
+        self.stepwidth = radii
         
-        positions = {}
         start_time_offsets = self.calculate_start_time_offsets(total_time, gait_pattern)
-
-        for i, leg_name in enumerate(leg_names):
-            positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, total_time, radii[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
-
+       
         for n in range(repetitions):
+            positions = {}
+            for i, leg_name in enumerate(leg_names):
+                print (steps,"self.total_time: ",self.total_time)       
+                if self.stepwidth[i] < 0.08:  #limit
+                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.total_time, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
+                else:
+                    self.stepwidth[i] = 0.08
+                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.total_time, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
+                    
             if self.stopwalk:
                 break
-            print (steps,"self.total_time: ",self.total_time)            
+            print (steps,"self.stepwidth: ",self.stepwidth[i])            
             start_time = time.time()
             for step in range(steps):
                 mypoints = []
@@ -257,9 +263,18 @@ class SpotMicro:
              self.total_time = 0.11
         if self.total_time > self.min:
              self.total_time = 3.9
-             
-        
+            
         print(f"Updated total_time: {self.total_time}")
+        
+        
+    def update_stepwidth(self, adjustment):
+        self.max = 0.10
+        
+        tmp_array = []
+        for x in self.stepwidth:
+            tmp_array.append(x + adjustment)
+            self.stepwidth = tmp_array
+        print(f"Updated update_stepwidth: {self.stepwidth}")
                 
     def demo(self):
         total_time = 1 
@@ -422,8 +437,24 @@ class MyController(Controller):
         
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
             self.state['walk'] = False
-        
-        
+            
+    def on_L1_press(self):
+        print ("on_L1_press: steppwith")
+        stepwidthdelta = 0.005
+        # speed up
+        if self.state['walk']:
+            self.walker.update_stepwidth(stepwidthdelta)
+            print("increase_stepwidth")
+            
+    def on_R1_press(self):
+        print ("on_R1_press: steppwith")
+        stepwidthdelta = 0.005
+        # speed up
+        if self.state['walk']:
+            self.walker.update_stepwidth(-stepwidthdelta)
+            print("decrease_stepwidth")
+    
+    
     '''
     on_up_arrow_press
     on_up_down_arrow_release
@@ -586,6 +617,13 @@ def main():
         print ("-----------------------------")
         print ("        P: exit")
          
+        print ("     Arrow up: step faster")
+        print ("Arrow left: tbd  Arrow right: tbd")
+        print ("    Arrow down: step slower")
+        
+        print ("Trigger Left: step wider  Trigger Right: step narrower")
+
+        
         while True:
             if not event_queue.empty():
                 event = event_queue.get()
