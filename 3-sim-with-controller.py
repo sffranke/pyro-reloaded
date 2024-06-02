@@ -42,6 +42,7 @@ class SpotMicro:
         self.ax.set_zlabel('Y')
         self.lines = self.init_lines(coords)
         self.stopwalk = False
+        self.total_time = 1
         
     def init_lines(self, coords):
         lines = []
@@ -174,7 +175,7 @@ class SpotMicro:
             offsets = [0, 0, phase_time, phase_time]
             return offsets
         elif gait == "gallop":
-            # just dreaming ...
+            # just dreaming ..self.
             phase_time = total_time / 4
             offsets = [0, 0, phase_time, phase_time]
             return offsets
@@ -215,6 +216,8 @@ class SpotMicro:
     def walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios):
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
         
+        self.total_time = total_time
+        
         positions = {}
         start_time_offsets = self.calculate_start_time_offsets(total_time, gait_pattern)
 
@@ -224,7 +227,7 @@ class SpotMicro:
         for n in range(repetitions):
             if self.stopwalk:
                 break
-            print (n)            
+            print (steps,"self.total_time: ",self.total_time)            
             start_time = time.time()
             for step in range(steps):
                 mypoints = []
@@ -234,12 +237,29 @@ class SpotMicro:
                                  self.kinematics.desired_p4_points[i][1] + p[1],
                                  self.kinematics.desired_p4_points[i][2]]
                     mypoints.append(new_point)
-
+                
                 self.anim(mypoints, pitch=10.0)
                 elapsed = time.time() - start_time
-                time.sleep(max(0, total_time / steps - elapsed))
+                time.sleep(max(0, self.total_time / steps - elapsed))
                 start_time = time.time()
 
+    def update_speed(self, adjustment):
+        self.max = 0.1  # short time leads to more speed
+        self.min = 4
+        self.total_time += adjustment
+        if self.total_time > self.min:
+             self.total_time = 3.9
+        if self.total_time < self.max:
+             self.total_time = 0.11
+             
+       
+        if self.total_time < self.max:
+             self.total_time = 0.11
+        if self.total_time > self.min:
+             self.total_time = 3.9
+             
+        
+        print(f"Updated total_time: {self.total_time}")
                 
     def demo(self):
         total_time = 1 
@@ -351,7 +371,6 @@ class SpotMicro:
         #plt.pause(10)
 
 
-
 class MyController(Controller):
     def __init__(self, walker, interface, connecting_using_ds4drv):
         self.walker = walker
@@ -373,26 +392,36 @@ class MyController(Controller):
             'twist': False,
         }
 
-    
     '''    
     def on_square_press(self):
         self.pitch += 1
         self.walker.twist(self.roll, self.pitch, self.yaw)
         #self.walker.demo()
     '''
+    '''
+    def adjust_speed(self, total_time):
+        repetitions = 111
+        steps = 15
+        radii = [0.045, 0.045, 0.045, 0.045] 
+        overlap_times = [0.0, 0.0, 0.0, 0.0]
+        swing_heights = [0.03, 0.03, 0.03, 0.03]
+        swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
+        self.walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
+    '''
     
     def on_triangle_press(self):
         print ("on_triangle_press")
         
         if not self.state['walk']:
+            
             event_queue.put("triangle")
-        
+            self.state['walk'] = True
             self.walker.stopwalk = not self.walker.stopwalk
            
         else:
         
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
-            self.state['walk'] = not self.state['walk'] 
+            self.state['walk'] = False
         
         
     '''
@@ -411,22 +440,30 @@ class MyController(Controller):
     def on_left_right_arrow_release(self):
         pass   
      
+     
     def on_up_arrow_press(self):
+        delta = 0.5
         # speed up
-        pass
-        
-    def on_up_arrow_press(self):
+        if self.state['walk']:
+            print ("on_up_arrow_press: ", self.state['walk'])
+            self.walker.update_speed(-delta)
+            print("increase_speed")
+             
+    def on_down_arrow_press(self):
+        delta = 0.5
         # speed down
-        print ("on_up_arrow_press")
+        if self.state['walk']:
+            print ("on_down_arrow_press: ", self.state['walk'])
+            self.walker.update_speed(+delta)
+            print("decrease_speed")
         
-        if not self.state['walk']:
-           return
+    
     
     def on_right_arrow_press(self):
         # turn right
         pass
         
-    def on_up_arrow_press(self):
+    def on_left_arrow_press(self):
         # turn left
         pass
     
@@ -443,6 +480,7 @@ class MyController(Controller):
             steps = 20
             pitch = 5
             self.walker.pose(moving_time, steps, angles, pitch)
+            self.state['walk'] = False
         else:
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
         self.state['stand'] = not self.state['stand']  
@@ -455,6 +493,7 @@ class MyController(Controller):
             steps = 20
             pitch = 5
             self.walker.pose(moving_time, steps, angles, pitch)
+            self.state['walk'] = False
         else:
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
         self.state['sit'] = not self.state['sit']
@@ -463,9 +502,10 @@ class MyController(Controller):
         #rest
         if not self.state['rest']:
             angles = [[0, 80, 135], [0, 80, 135], [0, 80, 135], [0, 80, 135]]
-            moving_time = 1
+            moving_time = 2
             steps = 20
             pitch = 5
+            self.state['walk'] = False
             self.walker.pose(moving_time, steps, angles, pitch)
         else:
             self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
@@ -549,22 +589,24 @@ def main():
         while True:
             if not event_queue.empty():
                 event = event_queue.get()
+                print("increase_speed", event)
                 if event == "triangle":
                     print("Processing triangle button event", controller.state['walk'])
                     
                     print("self.walker.stopwalk:",walker.stopwalk)
                     print("state:",'walk',controller.state['walk'])
-
                     
-                    total_time = 1 
+                    total_time = 2 
                     repetitions = 111
-                    steps = 15
+                    steps = 30
                     radii = [0.045, 0.045, 0.045, 0.045] 
                     overlap_times = [0.0, 0.0, 0.0, 0.0]
                     swing_heights = [0.03, 0.03, 0.03, 0.03]
                     swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
                     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
+                
             
+                    
             plt.pause(0.01)        
 
 if __name__ == "__main__":
