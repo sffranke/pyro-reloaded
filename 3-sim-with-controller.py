@@ -157,37 +157,36 @@ class SpotMicro:
         coords = self.get_current_coords()
         self.update_lines(coords)
         
-       
-        
+          
     # --------- walk ---------
     
-    def calculate_start_time_offsets(self, total_time, gait):
+    def calculate_start_time_offsets(self, gait):
         if gait == "wave":
-            phase_time = total_time / 4
+            phase_time =  1 / 2
             offsets = [2 * phase_time, 1 * phase_time, 3 * phase_time, 0 * phase_time]
             return offsets
         elif gait == "trot":
-            phase_time = total_time / 2
+            phase_time = 1
             offsets = [0 * phase_time, 1 * phase_time, 2 * phase_time, 3 * phase_time]
             return offsets
         elif gait == "pace":
-            phase_time = total_time / 2
+            phase_time = 1
             offsets = [0, 0, phase_time, phase_time]
             return offsets
         elif gait == "gallop":
             # just dreaming ..self.
-            phase_time = total_time / 4
+            phase_time = 1 / 2
             offsets = [0, 0, phase_time, phase_time]
             return offsets
     
-    def getpositions(self, positions, name, desired_p4_points, steps, total_time, radius, start_time_offset, swing_height, swing_time_ratio):
-        swing_time = total_time * swing_time_ratio
-        stance_time = total_time * (1 - swing_time_ratio)
+    def getpositions(self, positions, name, desired_p4_points, steps, radius, start_time_offset, swing_height, swing_time_ratio):
+        swing_time = 2 * swing_time_ratio
+        stance_time = 2 * (1 - swing_time_ratio)
         swing_steps = int(steps * swing_time_ratio)
         stance_steps = steps - swing_steps
 
-        for t in np.linspace(0, total_time, steps):
-            t_mod = (t + start_time_offset) % total_time
+        for t in np.linspace(0, 2, steps):
+            t_mod = (t + start_time_offset) % 2
             if t_mod < stance_time / 2:
                 x, y = self.linear_motion(t_mod, stance_time / 2, 0, -radius / 2)
             elif t_mod < stance_time / 2 + swing_time:
@@ -219,17 +218,17 @@ class SpotMicro:
         self.total_time = total_time
         self.stepwidth = radii
         
-        start_time_offsets = self.calculate_start_time_offsets(total_time, gait_pattern)
+        start_time_offsets = self.calculate_start_time_offsets (gait_pattern)
        
         for n in range(repetitions):
             positions = {}
             for i, leg_name in enumerate(leg_names):
                 print (steps,"self.total_time: ",self.total_time)       
                 if self.stepwidth[i] < 0.08:  #limit
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.total_time, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
+                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
                 else:
                     self.stepwidth[i] = 0.08
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.total_time, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
+                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
                     
             if self.stopwalk:
                 break
@@ -602,7 +601,7 @@ def main():
         if arg == "d":
             walker.demo()
     else:
-        controller = MyController(walker=walker, interface="/dev/input/js0",               connecting_using_ds4drv=False)
+        controller = MyController(walker=walker, interface="/dev/input/js0", connecting_using_ds4drv=False)
         controller_thread = threading.Thread(target=start_controller, args=(walker,controller))
         controller_thread.start()
         walker.initplot()
@@ -623,7 +622,6 @@ def main():
         
         print ("Trigger Left: step wider  Trigger Right: step narrower")
 
-        
         while True:
             if not event_queue.empty():
                 event = event_queue.get()
@@ -637,14 +635,11 @@ def main():
                     total_time = 2 
                     repetitions = 111
                     steps = 30
-                    radii = [0.045, 0.045, 0.045, 0.045] 
+                    radii = [0.00, 0.00, 0.00, 0.00] 
                     overlap_times = [0.0, 0.0, 0.0, 0.0]
                     swing_heights = [0.03, 0.03, 0.03, 0.03]
                     swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
-                
-            
-                    
+                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)          
             plt.pause(0.01)        
 
 if __name__ == "__main__":
