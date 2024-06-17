@@ -294,7 +294,7 @@ class SpotMicro:
 
         return positions
 
-    def sideways_walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios):
+    def sideways_walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios, direction=1):
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
 
         self.total_time = total_time
@@ -322,16 +322,15 @@ class SpotMicro:
                     p = positions[leg_name][step]
                     new_point = [self.kinematics.desired_p4_points[i][0],
                                  self.kinematics.desired_p4_points[i][1] + p[1],
-                                 self.kinematics.desired_p4_points[i][2] + p[0]]
+                                 self.kinematics.desired_p4_points[i][2] + p[0] * direction]
                     mypoints.append(new_point)
 
                 self.anim(mypoints, pitch=10.0)
                 elapsed = time.time() - start_time
                 time.sleep(max(0, self.total_time / steps - elapsed))
                 start_time = time.time()
-
 # ###########################
-    
+
 def main():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -343,11 +342,13 @@ def main():
     overlap_times = [0.0, 0.0, 0.0, 0.0]
     swing_heights = [0.03, 0.03, 0.03, 0.03]
     swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios) 
-    walker.sideways_walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)         
+    angle = np.deg2rad(45)  # example angle in radians
+    #walker.angled_walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+    walker.sideways_walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, 1)  
+    walker.sideways_walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, -1)         
+    #walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios) 
     plt.pause(0.01)        
-              
-                    
+                               
 
 if __name__ == "__main__":
     main()
