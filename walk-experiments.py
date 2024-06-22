@@ -156,6 +156,10 @@ class SpotMicro:
             phase_time = 1 / 2
             offsets = [0, 0, phase_time, phase_time]
             return offsets
+        elif gait == "rotate_left" or gait == "rotate_right":
+            phase_time = 1 / 2
+            offsets = [2 * phase_time, 1 * phase_time, 3 * phase_time, 0 * phase_time]
+            return offsets
 
     def getpositions(self, positions, name, desired_p4_points, steps, radius, start_time_offset, swing_height, swing_time_ratio, angle=0):
         swing_time = 2 * swing_time_ratio
@@ -207,11 +211,24 @@ class SpotMicro:
         for n in range(repetitions):
             positions = {}
             for i, leg_name in enumerate(leg_names):
-                if self.stepwidth[i] < 0.08:
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i], angle)
+                if gait_pattern == "rotate_left":
+                    if leg_name in ["front_right", "back_right"]:
+                        # These legs move forward
+                        radius = self.stepwidth[i]
+                    else:
+                        # These legs move backward
+                        radius = -self.stepwidth[i]
+                elif gait_pattern == "rotate_right":
+                    if leg_name in ["front_right", "back_right"]:
+                        # These legs move backward
+                        radius = -self.stepwidth[i]
+                    else:
+                        # These legs move forward
+                        radius = self.stepwidth[i]
                 else:
-                    self.stepwidth[i] = 0.08
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i], angle)
+                    radius = self.stepwidth[i]
+                    
+                positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, radius, start_time_offsets[i], swing_heights[i], swing_time_ratios[i], angle)
                     
             if self.stopwalk:
                 break
@@ -235,30 +252,38 @@ def main():
     ax = fig.add_subplot(111, projection='3d')
     walker = SpotMicro(ax)
     total_time = 2 
-    repetitions = 4
-    steps = 30
+    repetitions = 3
+    steps = 90
     radii = [0.04, 0.04, 0.04, 0.04] 
     overlap_times = [0.0, 0.0, 0.0, 0.0]
     swing_heights = [0.03, 0.03, 0.03, 0.03]
     swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
     angle = np.deg2rad(0)  # example angle in radians
+    walker.walk(total_time, repetitions, radii, steps, "rotate_left", overlap_times, swing_heights, swing_time_ratios, angle)
+    plt.pause(0.01)
+    
+    angle = np.deg2rad(0)  # example angle in radians
+    walker.walk(total_time, repetitions, radii, steps, "rotate_right", overlap_times, swing_heights, swing_time_ratios, angle)
+    plt.pause(0.01)
+    
+    angle = np.deg2rad(0)  
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
     plt.pause(0.01)
-    angle = np.deg2rad(45)  # example angle in radians
+    angle = np.deg2rad(45)  
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
     plt.pause(0.01)
-    angle = np.deg2rad(-45)  # example angle in radians
+    angle = np.deg2rad(-45)  
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
     plt.pause(0.01)
-    angle = np.deg2rad(90)  # example angle in radians
+    angle = np.deg2rad(90)  
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
     plt.pause(0.01)
     plt.show()
-    angle = np.deg2rad(-90)  # example angle in radians
+    angle = np.deg2rad(-90)  
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
     plt.pause(0.01)
     plt.show()
-    angle = np.deg2rad(180)  # example angle in radians
+    angle = np.deg2rad(180) 
     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
     plt.pause(0.01)
     plt.show()
