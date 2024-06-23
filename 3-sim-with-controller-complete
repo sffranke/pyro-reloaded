@@ -300,9 +300,7 @@ class SpotMicro:
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
         
         self.total_time = total_time
-        self.stepwidth = radii
-        
-        
+        self.stepwidth = radii        
         
         start_time_offsets = self.calculate_start_time_offsets(gait_pattern)
        
@@ -375,6 +373,45 @@ class SpotMicro:
         print(f"Updated update_stepwidth: {self.stepwidth}")
                 
     def demo(self):
+    
+    
+    
+        ########
+        # tests
+        total_time = 2 
+        repetitions = 3
+        steps = 30
+        radii = [0.03, 0.03, 0.03, 0.03] 
+        overlap_times = [0.0, 0.0, 0.0, 0.0]
+        swing_heights = [0.03, 0.03, 0.03, 0.03]
+        swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
+        angle = np.deg2rad(0)  # example angle in radians
+        print("walk straight")
+        self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+        plt.pause(0.01)
+        angle = np.deg2rad(45)  # example angle in radians
+        print("walk diagonal +45")
+        self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+        plt.pause(0.01)
+        angle = np.deg2rad(-45)  # example angle in radians
+        print("walk diagonal -45")
+        self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+        plt.pause(0.01)
+        angle = np.deg2rad(90)  # example angle in radians
+        print("walk sidew 90")
+        self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+        plt.pause(0.01)
+        plt.show()
+        angle = np.deg2rad(-90)  # example angle in radians
+        print("walk sidew -90")
+        self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+        plt.pause(0.01)
+        plt.show()
+        angle = np.deg2rad(180)  # example angle in radians
+        print("walk backw")
+        self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
+        plt.pause(0.01)
+        ########
         total_time = 1 
         repetitions = 2
         steps = 60  # Increase the number of steps for smoother animation
@@ -539,7 +576,7 @@ class MyController(Controller):
             
     def on_L1_press(self):
         print ("on_L1_press: steppwith")
-        stepwidthdelta = 0.005
+        stepwidthdelta = 0.015
         # speed up
         if self.state['walk']:
             self.walker.update_stepwidth(stepwidthdelta)
@@ -547,7 +584,7 @@ class MyController(Controller):
             
     def on_R1_press(self):
         print ("on_R1_press: steppwith")
-        stepwidthdelta = 0.005
+        stepwidthdelta = 0.015
         # speed up
         if self.state['walk']:
             self.walker.update_stepwidth(-stepwidthdelta)
@@ -743,7 +780,7 @@ def main():
                     print("state:",'walk',controller.state['walk'])
                     
                     total_time = 2 
-                    repetitions = 3
+                    repetitions = 50
                     steps = 30
                     radii = [0.00, 0.00, 0.00, 0.00] 
                     overlap_times = [0.0, 0.0, 0.0, 0.0]
@@ -751,29 +788,9 @@ def main():
                     swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
                     angle = np.deg2rad(0)  # example angle in radians
                     
-                    walker.walk(total_time, repetitions, radii, steps, "rotate_left", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
-                    # tests
-                    angle = np.deg2rad(0)  # example angle in radians
                     walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
                     plt.pause(0.01)
-                    angle = np.deg2rad(45)  # example angle in radians
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
-                    angle = np.deg2rad(-45)  # example angle in radians
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
-                    angle = np.deg2rad(90)  # example angle in radians
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
-                    plt.show()
-                    angle = np.deg2rad(-90)  # example angle in radians
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
-                    plt.show()
-                    angle = np.deg2rad(180)  # example angle in radians
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
+                    
                     plt.show()
                 if event == "on_right_arrow_press":
                     print("Processing right_arrow button event", controller.state['walksideways'])
