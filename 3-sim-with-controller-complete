@@ -19,7 +19,8 @@ class SpotMicroKinematics:
     def __init__(self):
         self.d2r = pi / 180
         self.r2d = 180 / pi
-        self.sm = SpotMicroStickFigure(x=0, y=0.18, z=0, theta=5 * self.d2r)
+        self.height = 0.18
+        self.sm = SpotMicroStickFigure(x=0, y=self.height, z=0, theta=5 * self.d2r)
         self.desired_p4_points = np.array([
             [-self.sm.body_length / 2, 0, self.sm.body_width / 2 + self.sm.hip_length],
             [self.sm.body_length / 2, 0, self.sm.body_width / 2 + self.sm.hip_length],
@@ -43,6 +44,8 @@ class SpotMicro:
         self.lines = self.init_lines(coords)
         self.stopwalk = False
         self.total_time = 1
+        self.height = 0.18
+        
         
     def init_lines(self, coords):
         lines = []
@@ -96,7 +99,7 @@ class SpotMicro:
     def set_current_angles(self, moving_time, steps, angles_arr, pitch):
         current_angles = self.get_current_angles()
         #print("Vorher")
-        self.print_angles(current_angles)
+        #self.print_angles(current_angles)
         target_angles = [
             [angles_arr[0][0] * self.kinematics.d2r, -angles_arr[0][1] * self.kinematics.d2r,  angles_arr[0][2] * self.kinematics.d2r],
             [angles_arr[1][0] * self.kinematics.d2r, -angles_arr[1][1] * self.kinematics.d2r,  angles_arr[1][2] * self.kinematics.d2r],
@@ -121,7 +124,7 @@ class SpotMicro:
             self.anim(mypoints, pitch)
 
         #print("Nachher")
-        self.print_angles(self.get_current_angles())
+        #self.print_angles(self.get_current_angles())
         #print("########")
 
     def get_current_angles(self):
@@ -222,86 +225,13 @@ class SpotMicro:
     def linear_motion(self, t, T, start_pos, end_pos):
         return start_pos + (end_pos - start_pos) * (t / T), 0
 
-    def walkalt(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios):
-        leg_names = ["front_right", "back_right", "back_left", "front_left"]
-        
-        self.total_time = total_time
-        self.stepwidth = radii
-        
-        start_time_offsets = self.calculate_start_time_offsets (gait_pattern)
-       
-        for n in range(repetitions):
-            positions = {}
-            for i, leg_name in enumerate(leg_names):
-                print (steps,"self.total_time: ",self.total_time)       
-                if self.stepwidth[i] < 0.08:  #limit
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
-                else:
-                    self.stepwidth[i] = 0.08
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
-                    
-            if self.stopwalk:
-                break
-            print (steps,"self.stepwidth: ",self.stepwidth[i])            
-            start_time = time.time()
-            for step in range(steps):
-                mypoints = []
-                for i, leg_name in enumerate(leg_names):
-                    p = positions[leg_name][step]
-                    new_point = [self.kinematics.desired_p4_points[i][0] + p[0],
-                                 self.kinematics.desired_p4_points[i][1] + p[1],
-                                 self.kinematics.desired_p4_points[i][2]]
-                    mypoints.append(new_point)
-                
-                self.anim(mypoints, pitch=10.0)
-                elapsed = time.time() - start_time
-                time.sleep(max(0, self.total_time / steps - elapsed))
-                start_time = time.time()
-                
-    # -----------------------------------------------
-    ''' obsolete
-    def walk_sideways(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios):
-        leg_names = ["front_right", "back_right", "back_left", "front_left"]
-        
-        self.total_time = total_time
-        self.stepwidth = radii
-        
-        start_time_offsets = self.calculate_start_time_offsets (gait_pattern)
-       
-        for n in range(repetitions):
-            positions = {}
-            for i, leg_name in enumerate(leg_names):
-                print (steps,"self.total_time: ",self.total_time)       
-                if self.stepwidth[i] < 0.08:  #limit
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
-                else:
-                    self.stepwidth[i] = 0.08
-                    positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, self.stepwidth[i], start_time_offsets[i], swing_heights[i], swing_time_ratios[i])
-                    
-            if self.stopwalk:
-                break
-            print (steps,"self.stepwidth: ",self.stepwidth[i])            
-            start_time = time.time()
-            for step in range(steps):
-                mypoints = []
-                for i, leg_name in enumerate(leg_names):
-                    p = positions[leg_name][step]
-                    new_point = [self.kinematics.desired_p4_points[i][0] + p[0],
-                                 self.kinematics.desired_p4_points[i][1] + p[1],
-                                 self.kinematics.desired_p4_points[i][2]]
-                    mypoints.append(new_point)
-                
-                self.anim(mypoints, pitch=10.0)
-                elapsed = time.time() - start_time
-                time.sleep(max(0, self.total_time / steps - elapsed))
-                start_time = time.time()
-    '''
-    # -----------------------------------------------
+    
     def walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios, angle=0):
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
         
         self.total_time = total_time
-        self.stepwidth = radii        
+        self.stepwidth = radii 
+        self.angle = angle       
         
         start_time_offsets = self.calculate_start_time_offsets(gait_pattern)
        
@@ -325,7 +255,7 @@ class SpotMicro:
                 else:
                     radius = self.stepwidth[i]
                     
-                positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, radius, start_time_offsets[i], swing_heights[i], swing_time_ratios[i], angle)
+                positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, radius, start_time_offsets[i], swing_heights[i], swing_time_ratios[i], self.angle)
                     
             if self.stopwalk:
                 break
@@ -344,7 +274,6 @@ class SpotMicro:
                 time.sleep(max(0, self.total_time / steps - elapsed))
                 start_time = time.time()
 
-    # ##############################
 
     def update_speed(self, adjustment):
         self.max = 0.1  # short time leads to more speed
@@ -372,10 +301,31 @@ class SpotMicro:
             tmp_array.append(x + adjustment)
             self.stepwidth = tmp_array
         print(f"Updated update_stepwidth: {self.stepwidth}")
+        
+    
+    def update_angle(self, adjustment):
+        self.angle = adjustment
+        print(f"Updated update_angle {self.angle}")
+        
+        
+    def update_height(self, adjustment):
+        self.height = self.height + adjustment
+        print(f"Updated height {self.height}")
+        '''
+        ! add method through the SpotMicroStickFigure !
+        def set_body_height(self, height):
+            self.y = height
+            ht_body = transformations.homog_transxyz(self.x, self.y, self.z) @ transformations.homog_rotxyz(self.phi, self.psi, self.theta)
+            self.set_absolute_body_pose(ht_body)
+        '''
+        self.kinematics.sm.set_body_height(self.height)
+        
+        coords = self.get_current_coords()
+        self.update_lines(coords)
+
+     
                 
     def demo(self):
-    
-    
     
         ########
         # tests
@@ -613,7 +563,19 @@ class MyController(Controller):
     def on_left_right_arrow_release(self):
         pass   
      
-     
+    
+    def on_L3_press(self):
+        if not self.state['walk']:
+            delta = 0.01
+            # increase height
+            self.walker.update_height(delta)
+      
+    def on_R3_press(self):
+        if not self.state['walk']:
+            delta = 0.01
+            # decrease height
+            self.walker.update_height(-delta)  
+    
     def on_up_arrow_press(self):
         delta = 0.5
         # speed up
@@ -622,6 +584,7 @@ class MyController(Controller):
             self.walker.update_speed(-delta)
             print("increase_speed")
              
+    
     def on_down_arrow_press(self):
         delta = 0.5
         # speed down
@@ -630,8 +593,7 @@ class MyController(Controller):
             self.walker.update_speed(+delta)
             print("decrease_speed")
         
-    
-    
+
     def on_right_arrow_press(self):
         # walk walk_sideways right
         if not self.state['walk']:
@@ -736,6 +698,8 @@ class MyController(Controller):
         if current_time - self.last_update_time >= 1:
             angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
             print(f"The angle is {angle:.2f} degrees")
+
+            self.walker.update_angle(angle)
             self.last_update_time = current_time
 
     def get_joystick_angle(self, x, y):
@@ -827,7 +791,8 @@ def main():
         print ("    Arrow down: step slower")
         
         print ("Trigger Left: step wider  Trigger Right: step narrower")
-
+        print ("L3 up/down/left/right: change walk direction")
+        print ("L3/R3 press: increase/decrease height")
         
         while True:
             if not event_queue.empty():
