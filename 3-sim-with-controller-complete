@@ -150,17 +150,15 @@ class SpotMicro:
         self.stopwalk = not self.stopwalk
         time.sleep(1)
         self.set_current_angles(moving_time, steps, leg_angles, pitch)
-        
+
     def twist(self, roll, pitch, yaw):
-        self.kinematics.sm.set_body_angles(
-                                theta=pitch * self.kinematics.d2r,
-                                phi=roll * self.kinematics.d2r,
-                                psi=yaw * self.kinematics.d2r)
-                                
+        self.kinematics.sm.set_body_angles(theta=pitch * self.kinematics.d2r,
+                                           phi=roll * self.kinematics.d2r,
+                                           psi=yaw * self.kinematics.d2r)
+
         coords = self.get_current_coords()
         self.update_lines(coords)
         
-          
     # --------- walk ---------
     
     def calculate_start_time_offsets(self, gait):
@@ -776,23 +774,23 @@ def main():
         controller_thread.start()
         walker.initplot()
         
-        print ("          A: walk")
-        print ("[]: sit              O: stand")
-        print ("          X: rest")
-        print ("-----------------------------")
-        print ("          up: faster")
-        print ("<-: left            ->: right")
-        print ("        down: slower")
-        print ("-----------------------------")
-        print ("        P: exit")
-         
-        print ("     Arrow up: step faster")
-        print ("Arrow left: tbd  Arrow right: tbd")
-        print ("    Arrow down: step slower")
-        
-        print ("Trigger Left: step wider  Trigger Right: step narrower")
-        print ("L3 up/down/left/right: change walk direction")
-        print ("L3/R3 press: increase/decrease height")
+        print("          A: walk")
+        print("[]: sit              O: stand")
+        print("          X: rest")
+        print("-------------------------------")
+        print("          up: faster")
+        print("<-: left            ->: right")
+        print("        down: slower")
+        print("-------------------------------")
+        print("        P: exit")
+
+        print("     Arrow up: step faster")
+        print("Arrow left: tbd  Arrow right: tbd")
+        print("    Arrow down: step slower")
+
+        print("Trigger Left: step wider  Trigger Right: step narrower")
+        print("L3 up/down/left/right: change walk direction")
+        print("L3/R3 press: increase/decrease height")
         
         while True:
             if not event_queue.empty():
