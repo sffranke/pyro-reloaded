@@ -335,6 +335,12 @@ class SpotMicroStickFigure(object):
 
         # Call method to set absolute body pose
         self.set_absolute_body_pose(ht_body)
+        
+    def set_body_height(self, height):
+        '''Set the height of the body while maintaining the current foot positions'''
+        self.y = height
+        ht_body = transformations.homog_transxyz(self.x, self.y, self.z) @ transformations.homog_rotxyz(self.phi, self.psi, self.theta)
+        self.set_absolute_body_pose(ht_body)
 
     def get_leg_angles(self):
         ''' Get the leg angles for all four legs
