@@ -690,7 +690,13 @@ class MyController(Controller):
 
     def on_R3_up(self, value):
         pass
-
+        
+    def on_R3_left(self, value):
+        pass
+        
+    def on_R3_right(self, value):
+        pass
+        
     def on_R3_down(self, value):
         pass
         
