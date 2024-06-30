@@ -1,10 +1,16 @@
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-
+import json
 from spot_micro_kinematics_python.utilities import spot_micro_kinematics as smk
 from spot_micro_kinematics import SpotMicroKinematics
+plt.ion()
 
+def load_config():
+    with open('config.json', 'r') as config_file:
+        return json.load(config_file)
+
+config = load_config()
 
 class SpotMicro:
     def __init__(self, ax):
@@ -127,15 +133,17 @@ class SpotMicro:
         self.stopwalk = not self.stopwalk
         time.sleep(1)
         self.set_current_angles(moving_time, steps, leg_angles, pitch)
-
+        
     def twist(self, roll, pitch, yaw):
-        self.kinematics.sm.set_body_angles(theta=pitch * self.kinematics.d2r,
-                                           phi=roll * self.kinematics.d2r,
-                                           psi=yaw * self.kinematics.d2r)
-
+        self.kinematics.sm.set_body_angles(
+                                theta=pitch * self.kinematics.d2r,
+                                phi=roll * self.kinematics.d2r,
+                                psi=yaw * self.kinematics.d2r)
+                                
         coords = self.get_current_coords()
         self.update_lines(coords)
         
+          
     # --------- walk ---------
     
     def calculate_start_time_offsets(self, gait):
@@ -367,14 +375,21 @@ class SpotMicro:
         self.walk(total_time, repetitions, radii, steps, "gallop", overlap_times, swing_heights, swing_time_ratios)
         plt.pause(1)
 
-        
         print("roll, pitch, yaw")
         roll = 17
         pitch = 17
         yaw = 17
         self.twist(roll, pitch, yaw)
         plt.pause(1)
-        
+
+        print("rotate - left")
+        self.walk(total_time, repetitions, radii, steps, "rotate_left", overlap_times, swing_heights, swing_time_ratios)
+        plt.pause(1)
+
+        print("rotate - right")
+        self.walk(total_time, repetitions, radii, steps, "rotate_right", overlap_times, swing_heights, swing_time_ratios)
+        plt.pause(1)
+
         # Example poses
         # Stand
         print("Stand")
@@ -405,7 +420,8 @@ class SpotMicro:
 
         # Pee
         print("Pee")
-        angles = [[0, 35, 60], [0, 35, 60], [0, 35, 60], [-50, 80, 135]]
+        angles = config['pee_angles']
+
         moving_time = 1
         steps = 20
         pitch = 5
