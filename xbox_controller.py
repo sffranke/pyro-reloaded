@@ -24,22 +24,11 @@ class MyController(Controller):
         self.yaw = 0
         self.roll = 0
         
-        self.state = {
-            'stand': True,
-            'sit': False,
-            'rest': False,
-            'walk': False,
-            'greet': False,
-            'pee': False,
-            'pushups': False,
-            'twist': False,
-            'walksideways': False,
-        }
-        
         self.left_joystick_x = 0
         self.left_joystick_y = 0
         self.last_update_time = time.time()
         self.dead_zone = 0.2
+        self.updateangle = False
 
     '''    
     def on_square_press(self):
@@ -60,23 +49,15 @@ class MyController(Controller):
     
     def on_triangle_press(self):
         print ("on_triangle_press")
-        
-        if not self.state['walk']:
-            
-            event_queue.put("triangle")
-            self.state['walk'] = True
-            self.walker.stopwalk = not self.walker.stopwalk
-           
-        else:
-        
-            self.walker.pose(0.5, 20, [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]], 5)
-            self.state['walk'] = False
+        self.updateangle = True
+        event_queue.put("walk")
+        self.walker.stopwalk = False
             
     def on_L1_press(self):
         print ("on_L1_press: steppwith")
         stepwidthdelta = 0.015
         # speed up
-        if self.state['walk']:
+        if self.walker.stopwalk == False:
             self.walker.update_stepwidth(stepwidthdelta)
             print("increase_stepwidth")
             
@@ -84,7 +65,7 @@ class MyController(Controller):
         print ("on_R1_press: steppwith")
         stepwidthdelta = 0.015
         # speed up
-        if self.state['walk']:
+        if self.walker.stopwalk == False:
             self.walker.update_stepwidth(-stepwidthdelta)
             print("decrease_stepwidth")
     
@@ -95,60 +76,52 @@ class MyController(Controller):
         pass   
      
     def on_L3_press(self):
-        if not self.state['walk']:
+        if self.walker.stopwalk == True:
             delta = 0.01
             # increase height
             self.walker.update_height(delta)
       
     def on_R3_press(self):
-        if not self.state['walk']:
+        if self.walker.stopwalk == True:
             delta = 0.01
             # decrease height
             self.walker.update_height(-delta)  
     
     def on_up_arrow_press(self):
         delta = 0.5
-        # speed up
-        if self.state['walk']:
-            print ("on_up_arrow_press: ", self.state['walk'])
+        # speed upself.walker.stopwalk
+        if self.walker.stopwalk == False:
+            print ("on_up_arrow_press: ")
             self.walker.update_speed(-delta)
             print("increase_speed")
              
-    
+
     def on_down_arrow_press(self):
         delta = 0.5
         # speed down
-        if self.state['walk']:
-            print ("on_down_arrow_press: ", self.state['walk'])
+        if self.walker.stopwalk == False:
+            print ("on_down_arrow_press: ")
             self.walker.update_speed(+delta)
             print("decrease_speed")
         
 
     def on_right_arrow_press(self):
+        return
         # walk walk_sideways right
-        if not self.state['walk']:
-            
+        if self.walker.stopwalk == False:
             event_queue.put("on_right_arrow_press")
-            self.state['walk'] = True
-            self.walker.stopwalk = not self.walker.stopwalk
+            self.updateangle = False
+            #self.walker.stopwalk = not self.walker.stopwalk
            
-        else:
-        
-            self.walker.pose(0.5, 20, config['stand_angles'], 5)
-            self.state['walk'] = False
         
     def on_left_arrow_press(self):
-        if not self.state['walk']:
-            
+        return
+        # walk walk_sideways left
+        if self.walker.stopwalk == False:
             event_queue.put("on_left_arrow_press")
-            self.state['walk'] = True
-            self.walker.stopwalk = not self.walker.stopwalk
+            self.updateangle = False
+            #self.walker.stopwalk = not self.walker.stopwalk
            
-        else:
-        
-            self.walker.pose(0.5, 20, config['stand_angles'], 5)
-            self.state['walk'] = False
-        
     
     def on_triangle_release(self):
         pass
@@ -156,42 +129,23 @@ class MyController(Controller):
         
     def on_circle_press(self):
         # Stand
-        angles = config['stand_angles']
-        if not self.state['stand']:
-            moving_time = 0.5
-            steps = 20
-            pitch = 5
-            self.walker.pose(moving_time, steps, angles, pitch)
-            self.state['walk'] = False
-        else:
-            self.walker.pose(0.5, 20, angles, 5)
-        self.state['stand'] = not self.state['stand']  
+        self.walker.stopwalk = True
+        print("Stand press")
+        event_queue.put("stand")
+    
         
     def on_square_press(self):
         #sit
-        if not self.state['sit']:
-            angles = config['sit_angles']
-            moving_time = 1
-            steps = 20
-            pitch = 5
-            self.walker.pose(moving_time, steps, angles, pitch)
-            self.state['walk'] = False
-        else:
-            self.walker.pose(0.5, 20, config['stand_angles'], 5)
-        self.state['sit'] = not self.state['sit']
+        self.walker.stopwalk = True
+        print("event sit")
+        event_queue.put("sit")
+        
         
     def on_x_press(self):
         #rest
-        if not self.state['rest']:
-            angles = config['rest_angles']
-            moving_time = 2
-            steps = 20
-            pitch = 5
-            self.state['walk'] = False
-            self.walker.pose(moving_time, steps, angles, pitch)
-        else:
-            self.walker.pose(0.5, 20, config['stand_angles'], 5)
-        self.state['rest'] = not self.state['rest']
+        self.walker.stopwalk = True
+        print("rest press")
+        event_queue.put("rest")
         
     
     def on_L3_up(self, value):
@@ -223,29 +177,26 @@ class MyController(Controller):
         pass
         
     def on_share_press(self):
-        print ("rotate right")
-        if not self.state['walk']:
-            
-            event_queue.put("rotate_left")
-            self.state['walk'] = True
-            self.walker.stopwalk = not self.walker.stopwalk
+        self.walker.stopwalk = True
+        print ("rotate left")
+        event_queue.put("rotate_left")
+        self.walker.stopwalk = not self.walker.stopwalk
         
     def on_options_press(self):
+        self.walker.stopwalk = True
         print ("rotate right") 
-        if not self.state['walk']:
-            
-            event_queue.put("rotate_right")
-            self.state['walk'] = True
-            self.walker.stopwalk = not self.walker.stopwalk
+        event_queue.put("rotate_right")
+        self.walker.stopwalk = not self.walker.stopwalk
 
     def update_angle(self):
         current_time = time.time()
         if current_time - self.last_update_time >= 1:
             angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
-            print(f"The angle is {angle:.2f} degrees")
+            ##print(f"The angle is {angle:.2f} degrees")
 
-            self.walker.update_angle(angle)
-            self.last_update_time = current_time
+            if(self.updateangle):
+                self.walker.update_angle(angle)
+                self.last_update_time = current_time
 
     def get_joystick_angle(self, x, y):
         # Normalize x and y to the range [-1, 1]

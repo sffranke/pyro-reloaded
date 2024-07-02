@@ -130,9 +130,10 @@ class SpotMicro:
         self.pose(moving_time, steps, angles, pitch)
 
     def pose(self, moving_time, steps, leg_angles, pitch):
-        self.stopwalk = not self.stopwalk
-        time.sleep(1)
+        #self.stopwalk = not self.stopwalk
+        time.sleep(0.25)
         self.set_current_angles(moving_time, steps, leg_angles, pitch)
+        time.sleep(0.25)
         
     def twist(self, roll, pitch, yaw):
         self.kinematics.sm.set_body_angles(
@@ -143,7 +144,6 @@ class SpotMicro:
         coords = self.get_current_coords()
         self.update_lines(coords)
         
-          
     # --------- walk ---------
     
     def calculate_start_time_offsets(self, gait):
@@ -211,7 +211,7 @@ class SpotMicro:
     
     def walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios, angle=0):
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
-        
+        print("walk....")
         self.total_time = total_time
         self.stepwidth = radii 
         self.angle = angle       
@@ -219,6 +219,7 @@ class SpotMicro:
         start_time_offsets = self.calculate_start_time_offsets(gait_pattern)
        
         for n in range(repetitions):
+            print (n," ANGLE: ",self.angle* self.kinematics.r2d)
             positions = {}
             for i, leg_name in enumerate(leg_names):
                 if gait_pattern == "rotate_left":
@@ -241,7 +242,7 @@ class SpotMicro:
                 positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, radius, start_time_offsets[i], swing_heights[i], swing_time_ratios[i], self.angle)
                     
             if self.stopwalk:
-                break
+                return
             start_time = time.time()
             for step in range(steps):
                 mypoints = []
@@ -283,17 +284,17 @@ class SpotMicro:
         for x in self.stepwidth:
             tmp_array.append(x + adjustment)
             self.stepwidth = tmp_array
-        print(f"Updated update_stepwidth: {self.stepwidth}")
+        ##print(f"Updated update_stepwidth: {self.stepwidth}")
         
     
     def update_angle(self, adjustment):
         self.angle = adjustment
-        print(f"Updated update_angle {self.angle}")
+        #print(f"Updated update_angle {self.angle}")
         
         
     def update_height(self, adjustment):
         self.height = self.height + adjustment
-        print(f"Updated height {self.height}")
+        ##print(f"Updated height {self.height}")
         '''
         ! add method through the SpotMicroStickFigure !
         def set_body_height(self, height):
@@ -393,7 +394,8 @@ class SpotMicro:
         # Example poses
         # Stand
         print("Stand")
-        angles = [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]]
+        #angles = [[0, 35, 60], [0, 35, 60], [0, 35, 60], [0, 35, 60]]
+        angles = config['stand_angles']
         moving_time = 0.5
         steps = 20
         pitch = 5

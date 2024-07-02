@@ -21,11 +21,63 @@ plt.ion()
 from spotmicro import SpotMicro
 from xbox_controller import MyController
 
+import enum
+
+class State(enum.Enum):
+    WALK = "walk"
+    WALKSIDEWAYS = "walksideways"
+    SIT = "sit"
+    STAND = "stand"
+    REST = "rest"
+
+current_state = State.STAND
+
 def load_config():
     with open('config.json', 'r') as config_file:
         return json.load(config_file)
 
 config = load_config()
+
+
+def transition_to(walker, target_state):
+    global current_state
+    print("Transitioning to", target_state, "from", current_state)
+    if target_state == current_state:
+        return 
+        
+    if current_state != State.WALK and target_state == State.WALK:
+        current_state = State.WALK
+        angles = config['stand_angles']
+        walker.pose(0.5, 20, angles, 5)
+        #time.sleep(0.5)
+        walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "wave", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
+        return
+
+    if current_state == State.WALK and target_state != State.STAND:
+        current_state = target_state
+        angles = config['stand_angles']
+        walker.pose(0.5, 20, angles, 5)
+        if target_state == State.STAND:
+            angles = config['stand_angles']
+            walker.pose(0.5, 20, angles, 5)
+        elif target_state == State.REST:
+            angles = config['rest_angles']
+            walker.pose(0.5, 20, angles, 5)
+        elif target_state == State.SIT:
+            angles = config['sit_angles']
+            walker.pose(0.5, 20, angles, 5)
+        return
+
+    # Direct transitions for all states except from WALK to another state without going through STAND
+    if target_state == State.STAND:
+        angles = config['stand_angles']
+        walker.pose(0.5, 20, angles, 5)
+    elif target_state == State.REST:
+        angles = config['rest_angles']
+        walker.pose(0.5, 20, angles, 5)
+    elif target_state == State.SIT:
+        angles = config['sit_angles']
+        walker.pose(0.5, 20, angles, 5)
 
 def start_controller(walker, c):
     controller = c
@@ -35,6 +87,7 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     walker = SpotMicro(ax)
+    global current_state
     
     if len(sys.argv) == 2:
         arg = sys.argv[1]
@@ -47,18 +100,16 @@ def main():
         controller_thread.start()
         walker.initplot()
         
-        print ("          A: walk")
+        print ("           A: walk")
         print ("[]: sit              O: stand")
-        print ("          X: rest")
+        print ("           X: rest")
         print ("-----------------------------")
         print ("          up: faster")
-        print ("<-: left            ->: right")
         print ("        down: slower")
         print ("-----------------------------")
-        print ("        P: exit")
-        print ("     Arrow up: step faster")
-        print ("Arrow left: tbd  Arrow right: tbd")
-        print ("    Arrow down: step slower")
+        print ("           P: exit")
+        print ("    Arrow up: step faster")
+        print ("  Arrow down: step slower")
         print ("Trigger Left: step wider  Trigger Right: step narrower")
         print ("L3/R3 press: increase/decrease height")
         print ("share/options press: rotate left/right")
@@ -66,71 +117,29 @@ def main():
         while True:
             if not event_queue.empty():
                 event = event_queue.get()
-                print("increase_speed", event)
-                if event == "triangle":
-                    print("Processing triangle button event", controller.state['walk'])
-                    
-                    print("self.walker.stopwalk:",walker.stopwalk)
-                    print("state:",'walk',controller.state['walk'])
-                    '''
-                    total_time = 2 
-                    repetitions = 50
-                    steps = 30
-                    radii = [0.00, 0.00, 0.00, 0.00] 
-                    overlap_times = [0.0, 0.0, 0.0, 0.0]
-                    swing_heights = [0.03, 0.03, 0.03, 0.03]
-                    swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-                    angle = np.deg2rad(0)  # example angle in radians
-                    '''
-                    total_time = config['total_time']
-                    steps = config['steps']
-                    radii = config['radii']
-                    overlap_times = config['overlap_times']
-                    repetitions = config['repetitions']
-                    swing_heights =config['swing_heights']
-                    swing_time_ratios =config['swing_time_ratios']
-                    angle = np.deg2rad(0) 
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, angle)
-                    plt.pause(0.01)
-                    
-                    plt.show()
-                if event == "on_right_arrow_press":
-                    print("Processing right_arrow button event", controller.state['walk'])
-                    
-                    print("self.walker.stopwalk:",walker.stopwalk)
-                    print("state:",'walksideways',controller.state['walk'])
-                    
-                    total_time = 2 
-                    repetitions = 111
-                    steps = 30
-                    radii = [0.02, 0.02, 0.02, 0.02] 
-                    overlap_times = [0.0, 0.0, 0.0, 0.0]
-                    swing_heights = [0.03, 0.03, 0.03, 0.03]
-                    swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-                    angle = np.deg2rad(90) 
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios,angle)
-                    
-                if event == "on_left_arrow_press":
-                    print("Processing left button event", controller.state['walk'])
-                    
-                    print("self.walker.stopwalk:",walker.stopwalk)
-                    print("state:",'walksideways',controller.state['walk'])
-                    
-                    total_time = 2 
-                    repetitions = 111
-                    steps = 30
-                    radii = [0.02, 0.02, 0.02, 0.02] 
-                    overlap_times = [0.0, 0.0, 0.0, 0.0]
-                    swing_heights = [0.03, 0.03, 0.03, 0.03]
-                    swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-                    angle = np.deg2rad(-90) 
-                    walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios,angle)
+                print("EVENT: ",event)
                 
+                if event == "rest":
+                    print("event rest")
+                    transition_to(walker, State.REST)
+
+                if event == "walk":
+                    print("event walk")
+                    current_state = State.STAND
+                    transition_to(walker, State.WALK)
+
+                if event == "sit":
+                    print("event sit")
+                    transition_to(walker, State.SIT)
+
+                if event == "stand":
+                    print("event stand")
+                    transition_to(walker, State.STAND)
+                    
                 if event == "rotate_left":
-                    print("Processing rotate_left event", controller.state['walk'])
+                    print("Processing rotate_left event")
                     
                     print("self.walker.stopwalk:",walker.stopwalk)
-                    print("state:",'walksideways',controller.state['walk'])
                     
                     total_time = 2 
                     repetitions = 111
@@ -143,10 +152,9 @@ def main():
                     walker.walk(total_time, repetitions, radii, steps, "rotate_left", overlap_times, swing_heights, swing_time_ratios,angle)
 
                 if event == "rotate_right":
-                    print("Processing rotate_right event", controller.state['walk'])
+                    print("Processing rotate_right event")
                     
                     print("self.walker.stopwalk:",walker.stopwalk)
-                    print("state:",'walksideways',controller.state['walk'])
                     
                     total_time = 2 
                     repetitions = 111
