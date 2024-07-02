@@ -18,4 +18,4 @@ Controllable with Xbox-Controller for basic poses, no walk yet, includes demo mo
 Controllable with Xbox-Controller for basic poses and different walk gaits
 
 4-pyro:
-includes serv motot control - tbd -
+includes servo motor control - tbd -
