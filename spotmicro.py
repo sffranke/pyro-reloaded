@@ -290,7 +290,10 @@ class SpotMicro:
     def update_angle(self, adjustment):
         self.angle = adjustment
         #print(f"Updated update_angle {self.angle}")
-        
+
+    def update_pose(self, adjustment):
+        self.angle = adjustment
+        print(f"Updated update_angle {self.angle}")
         
     def update_height(self, adjustment):
         self.height = self.height + adjustment

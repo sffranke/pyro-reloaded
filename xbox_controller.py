@@ -29,23 +29,6 @@ class MyController(Controller):
         self.last_update_time = time.time()
         self.dead_zone = 0.2
         self.updateangle = False
-
-    '''    
-    def on_square_press(self):
-        self.pitch += 1
-        self.walker.twist(self.roll, self.pitch, self.yaw)
-        #self.walker.demo()
-    '''
-    '''
-    def adjust_speed(self, total_time):
-        repetitions = 111
-        steps = 15
-        radii = [0.045, 0.045, 0.045, 0.045] 
-        overlap_times = [0.0, 0.0, 0.0, 0.0]
-        swing_heights = [0.03, 0.03, 0.03, 0.03]
-        swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-        self.walker.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios)
-    '''
     
     def on_triangle_press(self):
         print ("on_triangle_press")
@@ -93,8 +76,7 @@ class MyController(Controller):
         if self.walker.stopwalk == False:
             print ("on_up_arrow_press: ")
             self.walker.update_speed(-delta)
-            print("increase_speed")
-             
+            print("increase_speed")    
 
     def on_down_arrow_press(self):
         delta = 0.5
@@ -103,7 +85,6 @@ class MyController(Controller):
             print ("on_down_arrow_press: ")
             self.walker.update_speed(+delta)
             print("decrease_speed")
-        
 
     def on_right_arrow_press(self):
         return
@@ -113,19 +94,13 @@ class MyController(Controller):
             self.updateangle = False
             #self.walker.stopwalk = not self.walker.stopwalk
            
-        
     def on_left_arrow_press(self):
-        return
-        # walk walk_sideways left
-        if self.walker.stopwalk == False:
-            event_queue.put("on_left_arrow_press")
-            self.updateangle = False
-            #self.walker.stopwalk = not self.walker.stopwalk
-           
+        self.walker.stopwalk = True
+        print("Poop press")
+        event_queue.put("poop")
     
     def on_triangle_release(self):
         pass
-        
         
     def on_circle_press(self):
         # Stand
@@ -133,13 +108,11 @@ class MyController(Controller):
         print("Stand press")
         event_queue.put("stand")
     
-        
     def on_square_press(self):
         #sit
         self.walker.stopwalk = True
         print("event sit")
         event_queue.put("sit")
-        
         
     def on_x_press(self):
         #rest
@@ -147,7 +120,6 @@ class MyController(Controller):
         print("rest press")
         event_queue.put("rest")
         
-    
     def on_L3_up(self, value):
         self.left_joystick_y = value
         self.update_angle()
@@ -165,38 +137,54 @@ class MyController(Controller):
         self.update_angle()
 
     def on_R3_up(self, value):
-        pass
-        
+        #print("on_R3_up")
+        self.right_joystick_y = value
+        self.update_pose()
+
     def on_R3_left(self, value):
-        pass
+        #print("on_R3_left")
+        self.right_joystick_x = value
+        self.update_pose()
         
     def on_R3_right(self, value):
-        pass
+        #print("on_R3_right")
+        self.right_joystick_x = value
+        self.update_pose()
         
     def on_R3_down(self, value):
-        pass
+        #print("on_R3_down")
+        self.right_joystick_y = value
+        self.update_pose()
         
     def on_share_press(self):
         self.walker.stopwalk = True
         print ("rotate left")
         event_queue.put("rotate_left")
-        self.walker.stopwalk = not self.walker.stopwalk
+        #self.walker.stopwalk = not self.walker.stopwalk
         
     def on_options_press(self):
         self.walker.stopwalk = True
         print ("rotate right") 
         event_queue.put("rotate_right")
-        self.walker.stopwalk = not self.walker.stopwalk
+        #self.walker.stopwalk = not self.walker.stopwalk
+
+    def update_pose(self):
+        
+        current_time = time.time()
+        if current_time - self.last_update_time >= 0.5:
+            #print("update_pose")
+            angle = self.get_joystick_angle(self.right_joystick_x, self.right_joystick_y)
+            self.walker.update_pose(angle)
+            self.last_update_time = current_time
 
     def update_angle(self):
         current_time = time.time()
         if current_time - self.last_update_time >= 1:
             angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
             ##print(f"The angle is {angle:.2f} degrees")
-
-            if(self.updateangle):
-                self.walker.update_angle(angle)
-                self.last_update_time = current_time
+            #if(self.updateangle):
+            self.walker.update_angle(angle)
+            self.last_update_time = current_time
 
     def get_joystick_angle(self, x, y):
         # Normalize x and y to the range [-1, 1]

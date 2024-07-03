@@ -25,8 +25,10 @@ import enum
 
 class State(enum.Enum):
     WALK = "walk"
-    WALKSIDEWAYS = "walksideways"
+    ROTATELEFT = "rotateleft"
+    ROTATERIGHT = "rotateright"
     SIT = "sit"
+    POOP = "poop"
     STAND = "stand"
     REST = "rest"
 
@@ -38,20 +40,58 @@ def load_config():
 
 config = load_config()
 
-
 def transition_to(walker, target_state):
     global current_state
     print("Transitioning to", target_state, "from", current_state)
+
+    walker.stopwalk = True
+
     if target_state == current_state:
         return 
         
     if current_state != State.WALK and target_state == State.WALK:
+        walker.stopwalk = True
         current_state = State.WALK
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
-        #time.sleep(0.5)
+        walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "wave", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
-        return
+        
+    elif target_state == State.ROTATELEFT:
+        current_state = State.ROTATELEFT
+        angles = config['stand_angles']
+        walker.pose(0.5, 20, angles, 5)
+        walker.stopwalk = False
+        walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "rotate_left", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
+    
+    elif target_state == State.ROTATERIGHT:
+        current_state = State.ROTATERIGHT
+        angles = config['stand_angles']
+        walker.pose(0.5, 20, angles, 5)
+        walker.stopwalk = False
+        walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "rotate_right", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
+
+    elif target_state == State.REST:
+        current_state = State.REST
+        angles = config['rest_angles']
+        walker.pose(0.5, 20, angles, 5)
+
+    elif target_state == State.SIT:
+        current_state = State.SIT
+        angles = config['sit_angles']
+        walker.pose(0.5, 20, angles, 5)
+    
+    elif target_state == State.POOP:
+        current_state = State.POOP
+        angles = config['poop_angles']
+        walker.pose(0.5, 20, angles, 5)
+
+    elif target_state == State.STAND:
+        current_state = State.STAND
+        angles = config['stand_angles']
+        walker.pose(0.5, 20, angles, 5)
+
+    return
 
     if current_state == State.WALK and target_state != State.STAND:
         current_state = target_state
@@ -132,40 +172,22 @@ def main():
                     print("event sit")
                     transition_to(walker, State.SIT)
 
+                if event == "poop":
+                    print("event poop")
+                    transition_to(walker, State.POOP)
+
                 if event == "stand":
                     print("event stand")
                     transition_to(walker, State.STAND)
                     
                 if event == "rotate_left":
-                    print("Processing rotate_left event")
+                    print("event rotate_left")
+                    transition_to(walker, State.ROTATELEFT)
                     
-                    print("self.walker.stopwalk:",walker.stopwalk)
-                    
-                    total_time = 2 
-                    repetitions = 111
-                    steps = 30
-                    radii = [0.02, 0.02, 0.02, 0.02] 
-                    overlap_times = [0.0, 0.0, 0.0, 0.0]
-                    swing_heights = [0.03, 0.03, 0.03, 0.03]
-                    swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-                    angle = np.deg2rad(0) 
-                    walker.walk(total_time, repetitions, radii, steps, "rotate_left", overlap_times, swing_heights, swing_time_ratios,angle)
-
                 if event == "rotate_right":
-                    print("Processing rotate_right event")
+                    print("event rotate_left")
+                    transition_to(walker, State.ROTATERIGHT)
                     
-                    print("self.walker.stopwalk:",walker.stopwalk)
-                    
-                    total_time = 2 
-                    repetitions = 111
-                    steps = 30
-                    radii = [0.02, 0.02, 0.02, 0.02] 
-                    overlap_times = [0.0, 0.0, 0.0, 0.0]
-                    swing_heights = [0.03, 0.03, 0.03, 0.03]
-                    swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-                    angle = np.deg2rad(0) 
-                    walker.walk(total_time, repetitions, radii, steps, "rotate_right", overlap_times, swing_heights, swing_time_ratios,angle)
-
             plt.pause(0.01)    
 
 if __name__ == "__main__":
