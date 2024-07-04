@@ -31,8 +31,23 @@ class State(enum.Enum):
     POOP = "poop"
     STAND = "stand"
     REST = "rest"
+    POSE = "pose"
 
-current_state = State.STAND
+class StateClass:
+    def __init__(self, state):
+        self._state = state
+    
+    def get_state(self):
+        return self._state
+    
+    def set_state(self, new_state):
+        self._state = new_state
+##Instantiate and initialize the state
+stateobj = StateClass(State.STAND)
+currentstate = stateobj.get_state()
+
+#Instantiate and initialize the state
+stateobj = StateClass(State.STAND)
 
 def load_config():
     with open('config.json', 'r') as config_file:
@@ -41,7 +56,7 @@ def load_config():
 config = load_config()
 
 def transition_to(walker, target_state):
-    global current_state
+    current_state=stateobj.get_state()
     print("Transitioning to", target_state, "from", current_state)
 
     walker.stopwalk = True
@@ -51,73 +66,54 @@ def transition_to(walker, target_state):
         
     if current_state != State.WALK and target_state == State.WALK:
         walker.stopwalk = True
-        current_state = State.WALK
+        stateobj.set_state(State.WALK)
+        #current_state = State.WALK
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
         walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "wave", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
         
     elif target_state == State.ROTATELEFT:
-        current_state = State.ROTATELEFT
+        stateobj.set_state(State.ROTATELEFT)
+        #current_state = State.ROTATELEFT
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
         walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "rotate_left", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
     
     elif target_state == State.ROTATERIGHT:
-        current_state = State.ROTATERIGHT
+        stateobj.set_state(State.ROTATERIGHT)
+        #current_state = State.ROTATERIGHT
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
         walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "rotate_right", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
 
     elif target_state == State.REST:
-        current_state = State.REST
+        stateobj.set_state(State.REST)
+        #current_state = State.REST
         angles = config['rest_angles']
         walker.pose(0.5, 20, angles, 5)
 
     elif target_state == State.SIT:
-        current_state = State.SIT
+        stateobj.set_state(State.SIT)
+        #current_state = State.SIT
         angles = config['sit_angles']
         walker.pose(0.5, 20, angles, 5)
     
     elif target_state == State.POOP:
-        current_state = State.POOP
+        stateobj.set_state(State.POOP)
+        #current_state = State.POOP
         angles = config['poop_angles']
         walker.pose(0.5, 20, angles, 5)
 
     elif target_state == State.STAND:
-        current_state = State.STAND
+        stateobj.set_state(State.STAND)
+        #current_state = State.STAND
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
 
     return
-
-    if current_state == State.WALK and target_state != State.STAND:
-        current_state = target_state
-        angles = config['stand_angles']
-        walker.pose(0.5, 20, angles, 5)
-        if target_state == State.STAND:
-            angles = config['stand_angles']
-            walker.pose(0.5, 20, angles, 5)
-        elif target_state == State.REST:
-            angles = config['rest_angles']
-            walker.pose(0.5, 20, angles, 5)
-        elif target_state == State.SIT:
-            angles = config['sit_angles']
-            walker.pose(0.5, 20, angles, 5)
-        return
-
-    # Direct transitions for all states except from WALK to another state without going through STAND
-    if target_state == State.STAND:
-        angles = config['stand_angles']
-        walker.pose(0.5, 20, angles, 5)
-    elif target_state == State.REST:
-        angles = config['rest_angles']
-        walker.pose(0.5, 20, angles, 5)
-    elif target_state == State.SIT:
-        angles = config['sit_angles']
-        walker.pose(0.5, 20, angles, 5)
 
 def start_controller(walker, c):
     controller = c
@@ -127,7 +123,8 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     walker = SpotMicro(ax)
-    global current_state
+    current_state = stateobj.get_state()
+    #global current_state
     
     if len(sys.argv) == 2:
         arg = sys.argv[1]
@@ -135,7 +132,7 @@ def main():
         if arg == "d":
             walker.demo()
     else:
-        controller = MyController(walker=walker, interface="/dev/input/js0", connecting_using_ds4drv=False)
+        controller = MyController(stateobj, walker=walker, interface="/dev/input/js0", connecting_using_ds4drv=False)
         controller_thread = threading.Thread(target=start_controller, args=(walker,controller))
         controller_thread.start()
         walker.initplot()
@@ -164,8 +161,8 @@ def main():
                     transition_to(walker, State.REST)
 
                 if event == "walk":
-                    print("event walk")
-                    current_state = State.STAND
+                    print("### event walk ----> ", current_state)
+                    #current_state = State.STAND
                     transition_to(walker, State.WALK)
 
                 if event == "sit":

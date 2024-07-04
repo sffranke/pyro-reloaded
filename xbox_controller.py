@@ -16,7 +16,8 @@ def load_config():
 config = load_config()
 
 class MyController(Controller):
-    def __init__(self, walker, interface, connecting_using_ds4drv):
+    def __init__(self, stateobj, walker, interface, connecting_using_ds4drv):
+        self.stateobj = stateobj
         self.walker = walker
         super().__init__(interface=interface, connecting_using_ds4drv=connecting_using_ds4drv)
     
@@ -94,22 +95,19 @@ class MyController(Controller):
     def on_R3_x_at_rest(self):
         self.roll = 0
         self.update_pose()
-
-    '''
-    def update_pose(self):
-        print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}")
-        # self.walker.kinematics.sm.set_body_angles(phi=self.roll, theta=self.pitch, psi=self.yaw)
-    '''
     
     def update_pose(self):
         current_time = time.time()
+    
         if current_time - self.last_update_time >= 0.25:
-            if self.walker.stopwalk == True:
+            current_state = self.stateobj.get_state()
+            
+            if current_state == "State.POSE":
                 print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}")
                 #self.roll = 0
                 #self.yaw = -5
                 #self.pitch = 0
-                self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, theta=self.pitch*self.walker.kinematics.d2r, psi=self.yaw*self.walker.kinematics.d2r)
+                self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, theta=(5+self.pitch)*self.walker.kinematics.d2r, psi=self.yaw*self.walker.kinematics.d2r)
                 coords = self.walker.get_current_coords()
                 self.walker.update_lines(coords)
                 time.sleep(0.001)
@@ -135,16 +133,12 @@ class MyController(Controller):
             print("decrease_speed")
 
     def on_right_arrow_press(self):
-        return
-        # walk walk_sideways right
-        if self.walker.stopwalk == False:
-            event_queue.put("posing")
-            self.updateangle = False
-            #self.walker.stopwalk = not self.walker.stopwalk
+        self.stateobj.set_state("State.POSE")       
            
     def on_left_arrow_press(self):
         self.walker.stopwalk = True
         print("Poop press")
+        self.stateobj.set_state("State.POOP")
         event_queue.put("poop")
     
     def on_triangle_release(self):
@@ -190,7 +184,6 @@ class MyController(Controller):
     def on_L3_y_at_rest(self):
         pass
         
-
     def on_share_press(self):
         self.walker.stopwalk = True
         print ("rotate left")
