@@ -99,10 +99,10 @@ class MyController(Controller):
     def update_pose(self):
         current_time = time.time()
     
-        if current_time - self.last_update_time >= 0.25:
+        if current_time - self.last_update_time >= 0.33:
             current_state = self.stateobj.get_state()
             
-            if current_state == "State.POSE":
+            if current_state == self.stateobj.State.POSE:
                 print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}")
                 #self.roll = 0
                 #self.yaw = -5
@@ -133,15 +133,18 @@ class MyController(Controller):
             print("decrease_speed")
 
     def on_right_arrow_press(self):
-        if self.stateobj.get_state() == State.POSE:
-            self.stateobj.set_state(State.STAND)
+        print ("on_right_arrow_press: ",self.stateobj.get_state())
+        if self.stateobj.get_state() == self.stateobj.State.POSE:
+            self.stateobj.set_state(self.stateobj.State.STAND)
+            event_queue.put("stand")
         else:
-            self.stateobj.set_state(State.POSE)
-           
+            self.stateobj.set_state(self.stateobj.State.POSE)
+            #event_queue.put("stand")
+        
     def on_left_arrow_press(self):
         self.walker.stopwalk = True
         print("Poop press")
-        self.stateobj.set_state(State.POOP)
+        #self.stateobj.set_state(self.stateobj.State.POOP)
         event_queue.put("poop")
     
     def on_triangle_release(self):
@@ -203,11 +206,8 @@ class MyController(Controller):
         
         current_state = self.stateobj.get_state()
         
-        
-        print ("äääääääääääääää ", current_state)
-        print(f"Type of current_state: {type(current_state)}")
-        if current_state == "State.WALK":
-            print ("zzzzzzzzzzzzzzzz ", current_state)
+        if current_state == self.stateobj.State.WALK:
+            
             current_time = time.time()
             if current_time - self.last_update_time >= 0.5:
                 angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
