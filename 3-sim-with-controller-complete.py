@@ -23,36 +23,39 @@ from xbox_controller import MyController
 
 import enum
 
-class State(enum.Enum):
-    WALK = "walk"
-    ROTATELEFT = "rotateleft"
-    ROTATERIGHT = "rotateright"
-    SIT = "sit"
-    POOP = "poop"
-    STAND = "stand"
-    REST = "rest"
-    POSE = "pose"
-
 class StateClass:
+    from enum import Enum
+
+    class State(Enum):
+        WALK = "walk"
+        ROTATELEFT = "rotateleft"
+        ROTATERIGHT = "rotateright"
+        SIT = "sit"
+        POOP = "poop"
+        STAND = "stand"
+        REST = "rest"
+        POSE = "pose"
+
     def __init__(self, state):
-        self._state = state
-    
+        if isinstance(state, self.State):
+            self._state = state
+        else:
+            raise ValueError("Invalid initial state")
+
     def get_state(self):
         return self._state
-    
+
     def set_state(self, new_state):
-        if isinstance(new_state, State):
+        if isinstance(new_state, self.State):
             self._state = new_state
         else:
             raise ValueError("Invalid state")
 
-
 ##Instantiate and initialize the state
-stateobj = StateClass(State.STAND)
+stateobj = StateClass(StateClass.State.STAND)
 currentstate = stateobj.get_state()
 
-#Instantiate and initialize the state
-stateobj = StateClass(State.STAND)
+
 
 def load_config():
     with open('config.json', 'r') as config_file:
@@ -69,56 +72,55 @@ def transition_to(walker, target_state):
     if target_state == current_state:
         return 
         
-    if current_state != State.WALK and target_state == State.WALK:
+    if current_state != stateobj.State.WALK and target_state == stateobj.State.WALK:
         walker.stopwalk = True
-        stateobj.set_state(State.WALK)
+        stateobj.set_state(stateobj.State.WALK)
         #current_state = State.WALK
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
         walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "wave", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
         
-    elif target_state == State.ROTATELEFT:
-        stateobj.set_state(State.ROTATELEFT)
+    elif target_state == stateobj.State.ROTATELEFT:
+        stateobj.set_state(stateobj.State.ROTATELEFT)
         #current_state = State.ROTATELEFT
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
         walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "rotate_left", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
     
-    elif target_state == State.ROTATERIGHT:
-        stateobj.set_state(State.ROTATERIGHT)
+    elif target_state == stateobj.State.ROTATERIGHT:
+        stateobj.set_state(stateobj.State.ROTATERIGHT)
         #current_state = State.ROTATERIGHT
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
         walker.stopwalk = False
         walker.walk(config['total_time'], config['repetitions'], config['radii'], config['steps'], "rotate_right", config['overlap_times'], config['swing_heights'], config['swing_time_ratios'], np.deg2rad(0))
 
-    elif target_state == State.REST:
-        stateobj.set_state(State.REST)
+    elif target_state == stateobj.State.REST:
+        stateobj.set_state(stateobj.State.REST)
         #current_state = State.REST
         angles = config['rest_angles']
         walker.pose(0.5, 20, angles, 5)
 
-    elif target_state == State.SIT:
-        stateobj.set_state(State.SIT)
+    elif target_state == stateobj.State.SIT:
+        stateobj.set_state(stateobj.State.SIT)
         #current_state = State.SIT
         angles = config['sit_angles']
         walker.pose(0.5, 20, angles, 5)
     
-    elif target_state == State.POOP:
-        stateobj.set_state(State.POOP)
+    elif target_state == stateobj.State.POOP:
+        stateobj.set_state(stateobj.State.POOP)
         #current_state = State.POOP
         angles = config['poop_angles']
         walker.pose(0.5, 20, angles, 5)
 
-    elif target_state == State.STAND:
-        stateobj.set_state(State.STAND)
+    elif target_state == stateobj.State.STAND:
+        stateobj.set_state(stateobj.State.STAND)
         #current_state = State.STAND
         angles = config['stand_angles']
         walker.pose(0.5, 20, angles, 5)
 
-    return
 
 def start_controller(walker, c):
     controller = c
@@ -163,32 +165,32 @@ def main():
                 
                 if event == "rest":
                     print("event rest")
-                    transition_to(walker, State.REST)
+                    transition_to(walker, stateobj.State.REST)
 
                 if event == "walk":
                     print("### event walk ----> ", current_state)
                     #current_state = State.STAND
-                    transition_to(walker, State.WALK)
+                    transition_to(walker, stateobj.State.WALK)
 
                 if event == "sit":
                     print("event sit")
-                    transition_to(walker, State.SIT)
+                    transition_to(walker, stateobj.State.SIT)
 
                 if event == "poop":
                     print("event poop")
-                    transition_to(walker, State.POOP)
+                    transition_to(walker, stateobj.State.POOP)
 
                 if event == "stand":
                     print("event stand")
-                    transition_to(walker, State.STAND)
+                    transition_to(walker, stateobj.State.STAND)
                     
                 if event == "rotate_left":
                     print("event rotate_left")
-                    transition_to(walker, State.ROTATELEFT)
+                    transition_to(walker, stateobj.State.ROTATELEFT)
                     
                 if event == "rotate_right":
                     print("event rotate_left")
-                    transition_to(walker, State.ROTATERIGHT)
+                    transition_to(walker, stateobj.State.ROTATERIGHT)
                     
             plt.pause(0.01)   
 
