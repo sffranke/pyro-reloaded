@@ -28,7 +28,6 @@ class MyController(Controller):
         self.left_joystick_y = 0
         self.last_update_time = time.time()
         self.dead_zone = 0.2
-        self.updateangle = False
     
     def on_triangle_press(self):
         print ("on_triangle_press")
@@ -70,6 +69,55 @@ class MyController(Controller):
             # decrease height
             self.walker.update_height(-delta)  
     
+    #########
+    
+    def on_R3_up(self, value):
+        self.pitch = 12*value / 32767.0  # Normalize to range -1 to 1
+        self.update_pose()
+
+    def on_R3_down(self, value):
+        self.pitch = value*12 / 32767.0  # Normalize to range -1 to 1
+        self.update_pose()
+
+    def on_R3_left(self, value):
+        self.roll = value*12 / 32767.0  # Normalize to range -1 to 1
+        self.update_pose()
+
+    def on_R3_right(self, value):
+        self.roll = value*12 / 32767.0  # Normalize to range -1 to 1
+        self.update_pose()
+
+    def on_R3_y_at_rest(self):
+        self.pitch = 0
+        self.update_pose()
+
+    def on_R3_x_at_rest(self):
+        self.roll = 0
+        self.update_pose()
+
+    '''
+    def update_pose(self):
+        print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}")
+        # self.walker.kinematics.sm.set_body_angles(phi=self.roll, theta=self.pitch, psi=self.yaw)
+    '''
+    
+    def update_pose(self):
+        current_time = time.time()
+        if current_time - self.last_update_time >= 0.25:
+            if self.walker.stopwalk == True:
+                print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}")
+                #self.roll = 0
+                #self.yaw = -5
+                #self.pitch = 0
+                self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, theta=self.pitch*self.walker.kinematics.d2r, psi=self.yaw*self.walker.kinematics.d2r)
+                coords = self.walker.get_current_coords()
+                self.walker.update_lines(coords)
+                time.sleep(0.001)
+                self.last_update_time = current_time
+                
+    #########
+
+        
     def on_up_arrow_press(self):
         delta = 0.5
         # speed upself.walker.stopwalk
@@ -90,7 +138,7 @@ class MyController(Controller):
         return
         # walk walk_sideways right
         if self.walker.stopwalk == False:
-            event_queue.put("on_right_arrow_press")
+            event_queue.put("posing")
             self.updateangle = False
             #self.walker.stopwalk = not self.walker.stopwalk
            
@@ -136,26 +184,13 @@ class MyController(Controller):
         self.left_joystick_x = value
         self.update_angle()
 
-    def on_R3_up(self, value):
-        #print("on_R3_up")
-        self.right_joystick_y = value
-        self.update_pose()
+    def on_L3_x_at_rest(self):
+        pass
+           
+    def on_L3_y_at_rest(self):
+        pass
+        
 
-    def on_R3_left(self, value):
-        #print("on_R3_left")
-        self.right_joystick_x = value
-        self.update_pose()
-        
-    def on_R3_right(self, value):
-        #print("on_R3_right")
-        self.right_joystick_x = value
-        self.update_pose()
-        
-    def on_R3_down(self, value):
-        #print("on_R3_down")
-        self.right_joystick_y = value
-        self.update_pose()
-        
     def on_share_press(self):
         self.walker.stopwalk = True
         print ("rotate left")
@@ -168,18 +203,10 @@ class MyController(Controller):
         event_queue.put("rotate_right")
         #self.walker.stopwalk = not self.walker.stopwalk
 
-    def update_pose(self):
-        
-        current_time = time.time()
-        if current_time - self.last_update_time >= 0.5:
-            #print("update_pose")
-            angle = self.get_joystick_angle(self.right_joystick_x, self.right_joystick_y)
-            self.walker.update_pose(angle)
-            self.last_update_time = current_time
 
     def update_angle(self):
         current_time = time.time()
-        if current_time - self.last_update_time >= 1:
+        if current_time - self.last_update_time >= 0.5:
             angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
             ##print(f"The angle is {angle:.2f} degrees")
             #if(self.updateangle):
@@ -215,26 +242,7 @@ class MyController(Controller):
         if angle_degrees > 180:
             angle_degrees -= 360
 
-        return angle_degrees
-
-    def on_R3_y_at_rest(self):
-        pass
-        
-    def on_L3_x_at_rest(self):
-        pass
-           
-    def on_L3_y_at_rest(self):
-        pass
-        
-    def on_R3_y_at_rest(self):
-        pass
-    
-    def on_R3_left(self, value):
-        pass
-        
-    def on_R3_x_at_rest(self):
-        pass
-    
+        return angle_degrees  
         
     def on_playstation_button_release(self):
         os._exit(1)

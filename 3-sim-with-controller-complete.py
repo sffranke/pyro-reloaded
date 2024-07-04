@@ -188,7 +188,7 @@ def main():
                     print("event rotate_left")
                     transition_to(walker, State.ROTATERIGHT)
                     
-            plt.pause(0.01)    
+            plt.pause(0.01)   
 
 if __name__ == "__main__":
     main()
