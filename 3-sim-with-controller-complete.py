@@ -41,7 +41,12 @@ class StateClass:
         return self._state
     
     def set_state(self, new_state):
-        self._state = new_state
+        if isinstance(new_state, State):
+            self._state = new_state
+        else:
+            raise ValueError("Invalid state")
+
+
 ##Instantiate and initialize the state
 stateobj = StateClass(State.STAND)
 currentstate = stateobj.get_state()

@@ -133,12 +133,15 @@ class MyController(Controller):
             print("decrease_speed")
 
     def on_right_arrow_press(self):
-        self.stateobj.set_state("State.POSE")       
+        if self.stateobj.get_state() == State.POSE:
+            self.stateobj.set_state(State.STAND)
+        else:
+            self.stateobj.set_state(State.POSE)
            
     def on_left_arrow_press(self):
         self.walker.stopwalk = True
         print("Poop press")
-        self.stateobj.set_state("State.POOP")
+        self.stateobj.set_state(State.POOP)
         event_queue.put("poop")
     
     def on_triangle_release(self):
@@ -196,15 +199,22 @@ class MyController(Controller):
         event_queue.put("rotate_right")
         #self.walker.stopwalk = not self.walker.stopwalk
 
-
     def update_angle(self):
-        current_time = time.time()
-        if current_time - self.last_update_time >= 0.5:
-            angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
-            ##print(f"The angle is {angle:.2f} degrees")
-            #if(self.updateangle):
-            self.walker.update_angle(angle)
-            self.last_update_time = current_time
+        
+        current_state = self.stateobj.get_state()
+        
+        
+        print ("äääääääääääääää ", current_state)
+        print(f"Type of current_state: {type(current_state)}")
+        if current_state == "State.WALK":
+            print ("zzzzzzzzzzzzzzzz ", current_state)
+            current_time = time.time()
+            if current_time - self.last_update_time >= 0.5:
+                angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
+                print(f"The angle is {angle:.2f} degrees")
+                #if(self.updateangle):
+                self.walker.update_angle(angle)
+                self.last_update_time = current_time
 
     def get_joystick_angle(self, x, y):
         # Normalize x and y to the range [-1, 1]

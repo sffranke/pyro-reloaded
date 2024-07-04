@@ -219,7 +219,7 @@ class SpotMicro:
         start_time_offsets = self.calculate_start_time_offsets(gait_pattern)
        
         for n in range(repetitions):
-            print (n," ANGLE: ",self.angle* self.kinematics.r2d)
+            #print (n," ANGLE: ",self.angle* self.kinematics.r2d)
             positions = {}
             for i, leg_name in enumerate(leg_names):
                 if gait_pattern == "rotate_left":
