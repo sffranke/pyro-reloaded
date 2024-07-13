@@ -1,5 +1,6 @@
 # pyro-reloaded
-yet another robodog
+yet another robodog  
+Pure python, without ROS.
 
 1-sim-poses-without-walk.py:    
 Simulation using matplotlib, basic tests posing only
@@ -12,7 +13,8 @@ Demo mode: python 2-sim-poses-with-walk.py d
 Controllable with Xbox-Controller for basic poses, no walk yet, includes demo mode
 
 pyro_anim:  
-Controllable with Xbox-Controller for basic poses and different walk gaits
+Controllable with Xbox Controller for basic poses and different walk gaits  
+Demo mode without Xbox Controller: python pyro_anim.py --mode demo  
 
            A: walk
 []: sit              O: stand
