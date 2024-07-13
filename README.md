@@ -14,8 +14,8 @@ Controllable with Xbox-Controller for basic poses, no walk yet, includes demo mo
 
 <img src="pyro.gif" width="400" height="300" />
 
-3-sim-with-controller-complete:  
+pyro_anim:  
 Controllable with Xbox-Controller for basic poses and different walk gaits
 
-4-pyro:
+pyro_real:
 includes servo motor control - tbd -
