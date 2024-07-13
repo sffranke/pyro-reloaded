@@ -11,11 +11,10 @@ Demo mode: python 2-sim-poses-with-walk.py d
 3-sim-with-controller:  
 Controllable with Xbox-Controller for basic poses, no walk yet, includes demo mode
 
-
-<img src="pyro.gif" width="400" height="300" />
-
 pyro_anim:  
 Controllable with Xbox-Controller for basic poses and different walk gaits
+
+<img src="pyro.gif" width="400" height="300" />
 
 pyro_real:
 includes servo motor control - tbd -
