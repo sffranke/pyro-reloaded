@@ -29,35 +29,43 @@ class MyController(Controller):
         event_queue.put("walk")
         self.walker.stopwalk = False
 
+    def on_L3_press(self):
+        print ("L3 press", self.walker.stopwalk)
+        if self.walker.stopwalk == True:
+            delta = 0.01
+            # increase height
+            self.walker.update_height(delta)
+      
+    def on_R3_press(self):
+        print ("L3 press", self.walker.stopwalk)
+        if self.walker.stopwalk == True:
+            delta = 0.01
+            # decrease height
+            self.walker.update_height(-delta)  
+
     def on_L1_press(self):
-        if not self.walker.stopwalk:
+        if  self.walker.stopwalk == False:
             self.walker.update_stepwidth(0.015)
             print("increase_stepwidth")
 
     def on_R1_press(self):
-        if not self.walker.stopwalk:
+        if  self.walker.stopwalk == False:
             self.walker.update_stepwidth(-0.015)
             print("decrease_stepwidth")
 
     def on_up_arrow_press(self):
-        if not self.walker.stopwalk:
+        if  self.walker.stopwalk == False:
             self.walker.update_speed(-0.5)
             print("increase_speed")
 
     def on_down_arrow_press(self):
-        if not self.walker.stopwalk:
+        if  self.walker.stopwalk == False:
             self.walker.update_speed(0.5)
             print("decrease_speed")
     
     def on_right_arrow_press(self):
         self.walker.stopwalk = True
-        print("on_right_arrow_press: ", self.stateobj.get_state())
-        if self.stateobj.get_state() == self.stateobj.State.POSE:
-            self.stateobj.set_state(self.stateobj.State.STAND)
-            event_queue.put("stand")
-        else:
-            time.sleep(0.1)
-            self.stateobj.set_state(self.stateobj.State.POSE)
+        event_queue.put("pose")
    
     def on_left_arrow_press(self):
         self.walker.stopwalk = True
@@ -93,9 +101,12 @@ class MyController(Controller):
         os._exit(1)
 
     def update_pose(self):
-        if not self.walker.stopwalk:
+        #print ("Stopwalk: ",self.walker.stopwalk,self.stateobj.get_state())
+        #if self.walker.stopwalk == False or self.stateobj.get_state() != self.stateobj.State.POSE:
+        if self.stateobj.get_state() != self.stateobj.State.POSE:
+            #print ("Stopwalk false: ",self.stateobj.get_state())
             return
-        # print (self.stateobj.get_state())
+        
         if self.stateobj.get_state() == self.stateobj.State.POSE:
             current_time = time.time()
             if current_time - self.last_update_time >= 0.33:
@@ -104,9 +115,10 @@ class MyController(Controller):
                 self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, theta=(5+self.pitch)*self.walker.kinematics.d2r, psi=self.yaw*self.walker.kinematics.d2r)
                 coords = self.walker.get_current_coords()
                 self.walker.update_lines(coords)
-                time.sleep(0.001)
+                time.sleep(0.002)
                 self.last_update_time = current_time
-
+    
+    # control walking directions
     def update_angle(self):
         if self.stateobj.get_state() == self.stateobj.State.WALK:
             current_time = time.time()
@@ -128,7 +140,6 @@ class MyController(Controller):
             angle_degrees -= 360
         return angle_degrees
 
-    # Implementing joystick movement handlers
     def on_L3_up(self, value): self.left_joystick_y = value; self.update_angle()
     def on_L3_down(self, value): self.left_joystick_y = value; self.update_angle()
     def on_L3_left(self, value): self.left_joystick_x = value; self.update_angle()
@@ -136,7 +147,6 @@ class MyController(Controller):
     def on_L3_x_at_rest(self): pass
     def on_L3_y_at_rest(self): pass
 
-    # Implementing R3 joystick movement handlers for pitch and roll adjustments
     def on_R3_up(self, value): self.pitch = 12*value / 32767.0; self.update_pose()
     def on_R3_down(self, value): self.pitch = value*12 / 32767.0; self.update_pose()
     def on_R3_left(self, value): self.roll = value*12 / 32767.0; self.update_pose()
@@ -144,9 +154,7 @@ class MyController(Controller):
     def on_R3_y_at_rest(self): self.pitch = 0; self.update_pose()
     def on_R3_x_at_rest(self): self.roll = 0; self.update_pose()
 
-    # Placeholder methods for unimplemented button actions
     def on_up_down_arrow_release(self): pass
     def on_left_right_arrow_release(self): pass
     def on_triangle_release(self): pass
-    def on_L3_press(self): pass
-    def on_R3_press(self): pass
+  
