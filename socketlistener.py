@@ -56,3 +56,36 @@ def control_servos(angles):
                     [+10, +0, +0], # RF 
                     [ +10,-7, +5], # LF
                     [ +4, +0, +15]] # LR
+
+    rotations =    [[ 1, 1, -1], # RR
+                    [-1, 1, -1], # RF 
+                    [ 1,  -1, -1], # LF
+                    [-1, 1, +1]] # LR
+
+    
+    kit.servo[3].angle = 90 +   rotations[0][0] *  (angle[0][0] + rotations[0][0]*corrections[0][0])  # RR coxa
+    #time.sleep(0.001)
+    kit.servo[5].angle = 90 +   rotations[0][1] *  (angle[0][1] + rotations[0][1]*corrections[0][1])  # RR tibia
+    #time.sleep(0.001)
+    kit.servo[6].angle =  180 - (angle[0][2] -rotations[0][2]*corrections[0][2]) # RR femur
+    #time.sleep(0.001)
+    kit.servo[8].angle = 90 +   rotations[1][0] *  (angle[1][0] + rotations[1][0]*corrections[1][0])  # RF coxa
+    #time.sleep(0.001)
+    kit.servo[9].angle = 90 +   rotations[1][1] *  (angle[1][1] + rotations[1][1]*corrections[1][1])  # RF tibia
+    #time.sleep(0.001)
+    kit.servo[10].angle = 180 - (angle[1][2] -rotations[1][2]*corrections[1][2]) # RF femur
+    #time.sleep(0.001)
+    kit.servo[0].angle = 90 +   rotations[2][0] *  (angle[2][0] + rotations[2][0]*corrections[2][0]) # LF coxa
+    #time.sleep(0.001)
+    kit.servo[1].angle = 90 +   rotations[2][1] *  (angle[2][1] + rotations[2][1]*corrections[2][1]) # LF tibia
+    #time.sleep(0.001)
+    kit.servo[2].angle =  180 - (angle[2][2] -rotations[2][2]*corrections[2][2]) # LF femur
+    #time.sleep(0.001)
+    kit.servo[12].angle = 90 + rotations[3][0] *   (angle[3][0] + rotations[3][0]*corrections[3][0]) # LR coxa
+    #time.sleep(0.001)
+    kit.servo[13].angle = 90 + rotations[3][1] *   (angle[3][1] + rotations[3][1]*corrections[3][1]) # LR tibia
+    #time.sleep(0.001)
+    kit.servo[14].angle =  0 + (angle[3][2] + rotations[3][2]*corrections[3][2]) # LR femur
+    #time.sleep(0.001)
+if __name__ == "__main__":
+    start_server()
