@@ -52,21 +52,37 @@ class SpotMicro:
                 lines.append(line)
         return lines
 
+    def release():  # send release event! 
+        pass
+
+
     def update_lines(self, coords):
+ 
         if self.mode == "angles":
             angles = self.get_current_angles()
             deg_arr = tuple(tuple(round(value * self.kinematics.r2d) for value in inner_array) for inner_array in angles)
             print("deg_arr", deg_arr)
 
+            # here comes the real robot
+
+            #works, way to slow and laggy over WiFi using a Pi 3
+            
             data_to_send = json.dumps(deg_arr).encode()
             print("data_to_send:", data_to_send)
 
-            host = 'mini.local'
-            port = 65432
+            host = config['host']
+            port = config['port']
 
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((host, port))
-                s.sendall(data_to_send)
+            connected = False
+            while not connected:
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.connect((host, port))
+                        s.sendall(data_to_send)
+                        connected = True  
+                except socket.error as e:
+                    print(f"Connection failed: {e}. Retrying in 5 seconds...")
+                    time.sleep(5)  
         else:
             for i in range(4):
                 ind = -1 if i == 3 else i
@@ -107,10 +123,10 @@ class SpotMicro:
             [angles_arr[3][0] * self.kinematics.d2r,  angles_arr[3][1] * self.kinematics.d2r, -angles_arr[3][2] * self.kinematics.d2r]
         ]
 
-        step_delay = moving_time / steps
+        #step_delay = moving_time / steps
 
         for step in range(steps):
-            t = (1 - np.cos(np.pi * step / steps)) / 2
+            t = (1 - np.cos(np.pi * moving_time * step / steps)) / 2
             interpolated_angles = [
                 [
                     current_angles[leg][joint] * (1 - t) + target_angles[leg][joint] * t
@@ -137,15 +153,15 @@ class SpotMicro:
 
     def initplot(self):
         angles = config['stand_angles']
-        moving_time = 0.5
-        steps = 20
+        moving_time = config['total_time']
+        steps = config['steps']
         pitch = 5
         self.pose(moving_time, steps, angles, pitch)
 
     def calib(self):
         angles = config['calib_angles']
-        moving_time = 1
-        steps = 20
+        moving_time = config['total_time']
+        steps = config['steps']
         pitch = 5
         self.pose(moving_time, steps, angles, pitch)
         plt.pause(30)
@@ -282,10 +298,12 @@ class SpotMicro:
         coords = self.get_current_coords()
         self.update_lines(coords)
                 
+
     def demo(self):
-        total_time = 2 
+
         repetitions = 3
-        steps = 30
+        moving_time = config['total_time']
+        steps = config['steps']
         radii = [0.03, 0.03, 0.03, 0.03] 
         overlap_times = [0.0, 0.0, 0.0, 0.0]
         swing_heights = [0.03, 0.03, 0.03, 0.03]
@@ -315,9 +333,9 @@ class SpotMicro:
         self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, np.deg2rad(180))
         plt.pause(0.01)
 
-        total_time = 1 
+        moving_time = config['total_time']
+        steps = config['steps']
         repetitions = 2
-        steps = 60
         radii = [0.045, 0.045, 0.045, 0.045] 
         overlap_times = [0.0, 0.0, 0.0, 0.0]
         swing_heights = [0.03, 0.03, 0.03, 0.03]
