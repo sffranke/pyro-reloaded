@@ -15,7 +15,7 @@ Controllable with Xbox-Controller for basic poses, no walk yet, includes demo mo
 pyro_anim:  
 Controllable with Xbox Controller for basic poses and different walk gaits  
 Demo mode without Xbox Controller: python pyro_anim.py --mode demo  
-    
+```
            A: walk
 []: sit              O: stand
            X: rest
@@ -28,7 +28,7 @@ Trigger Left: step wider  Trigger Right: step narrower
 L3/R3 press: increase/decrease height  
 share/options press: rotate left/right  
 P: exit  
-
+```
 <img src="pyro.gif" width="400" height="300" />
 
 pyro_real:
