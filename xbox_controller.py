@@ -98,6 +98,7 @@ class MyController(Controller):
         event_queue.put("rotate_right")
 
     def on_playstation_button_release(self):
+        event_queue.put("release")
         os._exit(1)
 
     def update_pose(self):
