@@ -9,7 +9,7 @@
   "steps": 16,
   "repetitions":  50,
   "update_walkangle_time" : 0.5,
-  "update_pose_time" : 0.25,
+  "update_pose_time" : 0.04,
   "pose_factor" : 15,
   "radii": [0.00, 0.00, 0.00, 0.00],
   "overlap_times":  [0.0, 0.0, 0.0, 0.0],
