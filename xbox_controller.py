@@ -1,4 +1,3 @@
-import os
 import time
 import numpy as np
 import json
@@ -21,6 +20,8 @@ class MyController(Controller):
         self.roll = 0
         self.left_joystick_x = 0
         self.left_joystick_y = 0
+        self.right_joystick_x = 0
+        self.right_joystick_y = 0
         self.last_update_time = time.time()
         self.dead_zone = 0.2
 
@@ -99,9 +100,10 @@ class MyController(Controller):
 
     def on_playstation_button_release(self):
         event_queue.put("release")
-        os._exit(1)
+        
 
     def update_pose(self):
+        
         #print ("Stopwalk: ",self.walker.stopwalk,self.stateobj.get_state())
         #if self.walker.stopwalk == False or self.stateobj.get_state() != self.stateobj.State.POSE:
         if self.stateobj.get_state() != self.stateobj.State.POSE:
@@ -110,20 +112,23 @@ class MyController(Controller):
         
         if self.stateobj.get_state() == self.stateobj.State.POSE:
             current_time = time.time()
-            if current_time - self.last_update_time >= 0.33:
+            if current_time - self.last_update_time >= config['update_pose_time']:
             
-                #print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}")
-                self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, theta=(5+self.pitch)*self.walker.kinematics.d2r, psi=self.yaw*self.walker.kinematics.d2r)
+                print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}, Yaw: {self.yaw:.2f}")
+                self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, 
+                                                          theta=(5+self.pitch)*self.walker.kinematics.d2r, 
+                                                          psi=self.yaw*self.walker.kinematics.d2r)
                 coords = self.walker.get_current_coords()
                 self.walker.update_lines(coords)
-                time.sleep(0.002)
+                #time.sleep(0.002)
                 self.last_update_time = current_time
+        
     
     # control walking directions
     def update_angle(self):
         if self.stateobj.get_state() == self.stateobj.State.WALK:
             current_time = time.time()
-            if current_time - self.last_update_time >= 0.5:
+            if current_time - self.last_update_time >= config['update_walkangle_time']:
                 angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
                 #print(f"The angle is {angle:.2f} degrees")
                 self.walker.update_angle(angle)
@@ -148,10 +153,35 @@ class MyController(Controller):
     def on_L3_x_at_rest(self): pass
     def on_L3_y_at_rest(self): pass
 
-    def on_R3_up(self, value): self.pitch = 12*value / 32767.0; self.update_pose()
-    def on_R3_down(self, value): self.pitch = value*12 / 32767.0; self.update_pose()
-    def on_R3_left(self, value): self.roll = value*12 / 32767.0; self.update_pose()
-    def on_R3_right(self, value): self.roll = value*12 / 32767.0; self.update_pose()
+    def on_R3_up(self, value): 
+        #event_queue.put("update_pose")
+        self.pitch = config['pose_factor']*value / 32767.0
+        self.update_pose()
+
+    def on_R3_down(self, value):
+        #event_queue.put("update_pose")
+        self.pitch = value*config['pose_factor'] / 32767.0
+        self.update_pose()
+
+    def on_R3_left(self, value):
+         #event_queue.put("update_pose")
+         self.roll = value*config['pose_factor'] / 32767.0
+         self.update_pose()
+
+    def on_R3_right(self, value): 
+        #event_queue.put("update_pose")
+        self.roll = value*config['pose_factor'] / 32767.0
+        self.update_pose()
+
+    def on_L2_press(self, value):
+        self.yaw = 31079+value*config['pose_factor'] / 32767.0/2
+        self.update_pose()
+   
+    def on_R2_press(self, value):
+        #print(value)
+        self.yaw = 31079-value*config['pose_factor'] / 32767.0/2
+        self.update_pose()
+
     def on_R3_y_at_rest(self): self.pitch = 0; self.update_pose()
     def on_R3_x_at_rest(self): self.roll = 0; self.update_pose()
 
