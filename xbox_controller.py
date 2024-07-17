@@ -104,23 +104,19 @@ class MyController(Controller):
 
     def update_pose(self):
         
-        #print ("Stopwalk: ",self.walker.stopwalk,self.stateobj.get_state())
-        #if self.walker.stopwalk == False or self.stateobj.get_state() != self.stateobj.State.POSE:
         if self.stateobj.get_state() != self.stateobj.State.POSE:
-            #print ("Stopwalk false: ",self.stateobj.get_state())
             return
         
         if self.stateobj.get_state() == self.stateobj.State.POSE:
             current_time = time.time()
             if current_time - self.last_update_time >= config['update_pose_time']:
             
-                print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}, Yaw: {self.yaw:.2f}")
+                #print(f"Pitch: {self.pitch:.2f}, Roll: {self.roll:.2f}, Yaw: {self.yaw:.2f}")
                 self.walker.kinematics.sm.set_body_angles(phi=self.roll*self.walker.kinematics.d2r, 
                                                           theta=(5+self.pitch)*self.walker.kinematics.d2r, 
                                                           psi=self.yaw*self.walker.kinematics.d2r)
                 coords = self.walker.get_current_coords()
                 self.walker.update_lines(coords)
-                #time.sleep(0.002)
                 self.last_update_time = current_time
         
     
@@ -155,31 +151,34 @@ class MyController(Controller):
 
     def on_R3_up(self, value): 
         #event_queue.put("update_pose")
-        self.pitch = config['pose_factor']*value / 32767.0
+        self.pitch = int(config['pose_factor']*value / 32767)
         self.update_pose()
 
     def on_R3_down(self, value):
+   
         #event_queue.put("update_pose")
-        self.pitch = value*config['pose_factor'] / 32767.0
+        self.pitch = int(value*config['pose_factor'] / 32767)
         self.update_pose()
 
     def on_R3_left(self, value):
          #event_queue.put("update_pose")
-         self.roll = value*config['pose_factor'] / 32767.0
+         self.roll = int(value*config['pose_factor'] / 32767)
          self.update_pose()
 
     def on_R3_right(self, value): 
         #event_queue.put("update_pose")
-        self.roll = value*config['pose_factor'] / 32767.0
+        self.roll = int(value*config['pose_factor'] / 32767)
         self.update_pose()
 
     def on_L2_press(self, value):
-        self.yaw = 31079+value*config['pose_factor'] / 32767.0/2
+        self.yaw = int(25*(32767+value) / (2*32767))
+        #print(value,self.yaw)
         self.update_pose()
    
     def on_R2_press(self, value):
         #print(value)
-        self.yaw = 31079-value*config['pose_factor'] / 32767.0/2
+        self.yaw = int(-25*(32767+value) / (2*32767))
+        #print(value,self.yaw)
         self.update_pose()
 
     def on_R3_y_at_rest(self): self.pitch = 0; self.update_pose()
