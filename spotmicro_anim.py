@@ -7,6 +7,11 @@ from spot_micro_kinematics_python.utilities import spot_micro_kinematics as smk
 from spot_micro_kinematics import SpotMicroKinematics
 from config_loader import load_config
 
+import socket
+import json
+from adafruit_servokit import ServoKit
+kit = ServoKit(channels=16)
+
 plt.ion()
 config = load_config()
 
@@ -52,24 +57,98 @@ class SpotMicro:
                 lines.append(line)
         return lines
 
-    def release():  # send release event! 
-        pass
 
+    ####
+    def release_servos(self):
+        '''Releases all servos by setting their angles to None.'''
+        for i in range(16):
+            kit.servo[i].angle = None
 
+    def control_servos(self, angles):
+        '''Controls the servos based on the received angles.'''
+        if len(angles) != 4:
+            logging.error("Invalid number of angle sets received. Expected 4 sets of angles.")
+            return
+
+        angle = [
+            [angles[0][0], angles[0][1], angles[0][2]],  # RR
+            [angles[1][0], angles[1][1], angles[1][2]],  # RF 
+            [angles[2][0], -angles[2][1], -angles[2][2]],  # LF
+            [angles[3][0], -angles[3][1], -angles[3][2]]  # LR
+        ]
+        
+        corrections = [
+            [+10, +0, +0],  # RR
+            [-10, +0, +0],  # RF 
+            [+10, 0, 0],  # LF
+            [-4, +0, +15]  # LR
+        ]
+        
+        rotations = [
+            [1, +1, -1],  # RR
+            [-1, 1, -1],  # RF 
+            [1,  -1, 1],  # LF
+            [-1, 1, +1]  # LR
+        ]
+        
+        rr_coxa_pin = 0
+        rr_tibia_pin = 1
+        rr_femur_pin = 2
+        
+        rf_coxa_pin = 5
+        rf_tibia_pin = 6
+        rf_femur_pin = 7
+        
+        lf_coxa_pin = 9
+        lf_tibia_pin = 10
+        lf_femur_pin = 11
+        
+        lr_coxa_pin = 13
+        lr_tibia_pin = 14
+        lr_femur_pin = 15
+        
+        
+        servo_angles = [
+            (rr_coxa_pin, 90 + rotations[0][0] * (angle[0][0] + corrections[0][0])),  # RR coxa
+            (rr_tibia_pin, 90 + rotations[0][1] * (angle[0][1] + corrections[0][1])),  # RR tibia
+            (rr_femur_pin, 180 - (angle[0][2] - corrections[0][2])),  # RR femur
+            
+            (rf_coxa_pin, 90 + rotations[1][0] * (angle[1][0] + corrections[1][0])),  # RF coxa
+            (rf_tibia_pin, 90 + rotations[1][1] * (angle[1][1] + corrections[1][1])),  # RF tibia
+            (rf_femur_pin, 180 - (angle[1][2] - corrections[1][2])),  # RF femur
+            
+            (lf_coxa_pin, 90 + rotations[2][0] * (angle[2][0] + corrections[2][0])),  # LF coxa
+            (lf_tibia_pin, 90 + rotations[2][1] * (angle[2][1] + corrections[2][1])),  # LF tibia
+            (lf_femur_pin, 180 - (angle[2][2] - corrections[2][2])),  # LF femur
+            
+            (lr_coxa_pin, 90 + rotations[3][0] * (angle[3][0] + corrections[3][0])),  # LR coxa
+            (lr_tibia_pin, 90 + rotations[3][1] * (angle[3][1] + corrections[3][1])),  # LR tibia
+            (lr_femur_pin, angle[3][2] + corrections[3][2])  # LR femur
+        ]
+
+        for servo, angle in servo_angles:
+            kit.servo[servo].angle = angle
+        
+    
+    ####
+    
     def update_lines(self, coords):
  
         if self.mode == "angles":
             angles = self.get_current_angles()
             deg_arr = tuple(tuple(round(value * self.kinematics.r2d) for value in inner_array) for inner_array in angles)
-            print("deg_arr", deg_arr)
+            #print("deg_arr", deg_arr)
 
             # here comes the real robot
 
             #works, way to slow and laggy over WiFi using a Pi 3
             
-            data_to_send = json.dumps(deg_arr).encode()
-            print("data_to_send:", data_to_send)
-
+            ###data_to_send = json.dumps(deg_arr).encode()
+            #print("data_to_send:", deg_arr)
+            
+            self.control_servos(deg_arr)
+            
+            '''
             host = config['host']
             port = config['port']
 
@@ -83,6 +162,8 @@ class SpotMicro:
                 except socket.error as e:
                     print(f"Connection failed: {e}. Retrying in 5 seconds...")
                     time.sleep(5)  
+           '''         
+           
         else:
             for i in range(4):
                 ind = -1 if i == 3 else i
@@ -126,7 +207,8 @@ class SpotMicro:
         #step_delay = moving_time / steps
 
         for step in range(steps):
-            t = (1 - np.cos(np.pi * moving_time * step / steps)) / 2
+            t = (1 - np.cos(np.pi * step / steps)) / 2
+            print ("t:", t)
             interpolated_angles = [
                 [
                     current_angles[leg][joint] * (1 - t) + target_angles[leg][joint] * t
@@ -301,14 +383,14 @@ class SpotMicro:
 
     def demo(self):
 
-        repetitions = 3
-        moving_time = config['total_time']
+        repetitions = 5
+        total_time = config['total_time']
         steps = config['steps']
-        radii = [0.03, 0.03, 0.03, 0.03] 
-        overlap_times = [0.0, 0.0, 0.0, 0.0]
-        swing_heights = [0.03, 0.03, 0.03, 0.03]
-        swing_time_ratios = [0.25, 0.25, 0.25, 0.25]
-        
+        radii = [0.04, 0.04, 0.04, 0.04] 
+        overlap_times = config['overlap_times']
+        swing_heights = config['swing_heights']
+        swing_time_ratios = config['swing_time_ratios']
+
         print("walk straight")
         self.walk(total_time, repetitions, radii, steps, "wave", overlap_times, swing_heights, swing_time_ratios, np.deg2rad(0))
         plt.pause(0.01)
@@ -361,9 +443,9 @@ class SpotMicro:
         plt.pause(1)
 
         print("roll, pitch, yaw")
-        roll = 17
-        pitch = 17
-        yaw = 17
+        roll = 12
+        pitch = 12
+        yaw = 12
         self.twist(roll, pitch, yaw)
         plt.pause(1)
 
