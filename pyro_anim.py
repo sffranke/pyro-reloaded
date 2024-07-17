@@ -14,21 +14,20 @@ from spotmicro_anim import SpotMicro
 from xbox_controller import MyController
 from config_loader import load_config
 
-matplotlib.use('tkagg')
-
 # Argument parser setup
 parser = argparse.ArgumentParser(description='Control the SpotMicro robot.')
 parser.add_argument(
     '-m', '--mode', 
     type=str, 
-    choices=['calib', 'demo', 'animation', 'angles'], 
+    choices=['calib', 'demo', 'animation', 'angles', 'release'], 
     default='animation',
     help='Select the mode of operation: demo, animation or angles'
 )
 args = parser.parse_args()
 mode = args.mode
 
-if mode != 'angles':
+if mode == 'animantion':
+    matplotlib.use('tkagg')
     plt.ion()
 
 # State class definition
@@ -140,9 +139,14 @@ def main():
 
     if mode == 'angles':
         print("Outputting angles instead of running animation...")
+        walker.stopwalk = False
+        walker.demo()
 
     if mode == 'demo':
         walker.demo()
+        return
+    if mode == 'release':
+        walker.release_servos()
         return
     elif mode == 'calib':
         walker.calib()
@@ -205,6 +209,12 @@ def main():
                 if event == "release":
                     time.sleep(0.1)
                     walker.release()
+
+                if event == "update_pose":
+                    print ("Updating pose")
+                    controller.update_pose()
+                    time.sleep(0.1)
+            
             plt.pause(0.01)
 
 if __name__ == "__main__":
