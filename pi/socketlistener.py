@@ -65,32 +65,33 @@ def control_servos(angles):
     corrections = [
         [+10, +0, +0],  # RR
         [-10, +0, +0],  # RF 
-        [+10, -7, +5],  # LF
+        [+10, 0, 0],  # LF
         [-4, +0, +15]  # LR
     ]
     
     rotations = [
         [1, +1, -1],  # RR
         [-1, 1, -1],  # RF 
-        [1, -1, -1],  # LF
+        [1,  -1, 1],  # LF
         [-1, 1, +1]  # LR
     ]
     
-    rr_coxa_pin = 3
-    rr_tibia_pin = 5
-    rr_femur_pin = 6
+    rr_coxa_pin = 0
+    rr_tibia_pin = 1
+    rr_femur_pin = 2
     
-    rf_coxa_pin = 8
-    rf_tibia_pin = 9
-    rf_femur_pin = 10
+    rf_coxa_pin = 5
+    rf_tibia_pin = 6
+    rf_femur_pin = 7
     
-    lf_coxa_pin = 0
-    lf_tibia_pin = 4
-    lf_femur_pin = 15
+    lf_coxa_pin = 9
+    lf_tibia_pin = 10
+    lf_femur_pin = 11
     
-    lr_coxa_pin = 12
-    lr_tibia_pin = 13
-    lr_femur_pin = 14
+    lr_coxa_pin = 13
+    lr_tibia_pin = 14
+    lr_femur_pin = 15
+    
     
     servo_angles = [
         (rr_coxa_pin, 90 + rotations[0][0] * (angle[0][0] + corrections[0][0])),  # RR coxa
