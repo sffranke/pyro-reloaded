@@ -9,8 +9,6 @@ from config_loader import load_config
 
 import socket
 import json
-from adafruit_servokit import ServoKit
-kit = ServoKit(channels=16)
 
 plt.ion()
 config = load_config()
@@ -32,6 +30,9 @@ class SpotMicro:
             self.ax.set_ylabel('Z')
             self.ax.set_zlabel('Y')
             self.lines = self.init_lines(coords)
+        else:
+            from adafruit_servokit import ServoKit
+            self.kit = ServoKit(channels=16)
 
         self.stopwalk = True
         self.total_time = 1
