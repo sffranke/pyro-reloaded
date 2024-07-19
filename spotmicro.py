@@ -10,6 +10,7 @@ from config_loader import load_config
 import socket
 import json
 
+
 plt.ion()
 config = load_config()
 
@@ -21,7 +22,7 @@ class SpotMicro:
         self.ax = ax
         self.kinematics.sm.set_body_angles(theta=5 * self.kinematics.d2r)
         coords = self.kinematics.sm.get_leg_coordinates()
-
+        print ("X", self.mode)
         if self.mode != "real":
             self.ax.set_xlim3d([-0.2, 0.2])
             self.ax.set_zlim3d([0, 0.4])
@@ -63,7 +64,7 @@ class SpotMicro:
     def release_servos(self):
         '''Releases all servos by setting their angles to None.'''
         for i in range(16):
-            kit.servo[i].angle = None
+            self.kit.servo[i].angle = None
 
     def control_servos(self, angles):
         '''Controls the servos based on the received angles.'''
@@ -81,7 +82,7 @@ class SpotMicro:
         corrections = [
             [+10, +0, +0],  # RR
             [-10, +0, +0],  # RF 
-            [+10, 0, 0],  # LF
+            [+0, 0, 0],  # LF
             [-4, +0, +15]  # LR
         ]
         
@@ -128,7 +129,7 @@ class SpotMicro:
         ]
 
         for servo, angle in servo_angles:
-            kit.servo[servo].angle = angle
+            self.kit.servo[servo].angle = angle
         
     
     ####
