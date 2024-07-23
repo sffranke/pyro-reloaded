@@ -23,7 +23,8 @@ class MyController(Controller):
         self.right_joystick_x = 0
         self.right_joystick_y = 0
         self.last_update_time = time.time()
-        self.dead_zone = 0.2
+        self.dead_zone = 0.3
+        self.current_angle = None 
 
     def on_triangle_press(self):
         print("on_triangle_press")
@@ -102,6 +103,7 @@ class MyController(Controller):
         event_queue.put("release")
         
 
+
     def update_pose(self):
         
         if self.stateobj.get_state() != self.stateobj.State.POSE:
@@ -116,19 +118,53 @@ class MyController(Controller):
                                                           theta=(5+self.pitch)*self.walker.kinematics.d2r, 
                                                           psi=self.yaw*self.walker.kinematics.d2r)
                 coords = self.walker.get_current_coords()
-                self.walker.update_lines(coords)
+                
+                adjusted_coords = []
+                for group in coords:
+                    adjusted_group = []
+                    for vector in group:
+                        # Check if the value at index 2 is negative
+                        if vector[2] < 0:
+                            print ("femur angle can't be negative! ", np.degrees(vector[2]))
+                            vector = [vector[0], vector[1], np.radians(0)]  # Set index 2 to 0
+                        adjusted_group.append(vector)
+                    adjusted_coords.append(adjusted_group)
+                
+                print ("##### coords #####")
+                
+                for i, group in enumerate(adjusted_coords):
+                    print(f"Group {i+1}:")
+                    for j, vector in enumerate(group):
+                         print(f"  Vector {j + 1}: {[int(np.degrees(value)) for value in vector]}")
+               
+                
+                print ("##### ###### #####")
+                self.walker.update_lines(adjusted_coords)
                 self.last_update_time = current_time
+    
+   
+    def update_angle_if_changed(self, new_x, new_y, current_angle):
+        """Aktualisiert den Winkel nur, wenn sich der neue Winkel um mehr als 5 Grad unterscheidet."""
+        new_angle =self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
+        rounded_new_angle = round(new_angle)
         
+        if current_angle is None or abs(rounded_new_angle - current_angle) > 5:
+            return rounded_new_angle
+        return current_angle
+    
     
     # control walking directions
     def update_angle(self):
+        
         if self.stateobj.get_state() == self.stateobj.State.WALK:
             current_time = time.time()
             if current_time - self.last_update_time >= config['update_walkangle_time']:
-                angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
+                #angle = self.get_joystick_angle(self.left_joystick_x, self.left_joystick_y)
+                self.current_angle = self.update_angle_if_changed(self.left_joystick_x, self.left_joystick_y, self.current_angle)
                 #print(f"The angle is {angle:.2f} degrees")
-                self.walker.update_angle(angle)
+                self.walker.update_angle(self.current_angle)
                 self.last_update_time = current_time
+                
 
     def get_joystick_angle(self, x, y):
         x = x / 32767.0
@@ -142,6 +178,7 @@ class MyController(Controller):
             angle_degrees -= 360
         return angle_degrees
 
+    # walk directions
     def on_L3_up(self, value): self.left_joystick_y = value; self.update_angle()
     def on_L3_down(self, value): self.left_joystick_y = value; self.update_angle()
     def on_L3_left(self, value): self.left_joystick_x = value; self.update_angle()
@@ -150,35 +187,29 @@ class MyController(Controller):
     def on_L3_y_at_rest(self): pass
 
     def on_R3_up(self, value): 
-        #event_queue.put("update_pose")
         self.pitch = int(config['pose_factor']*value / 32767)
         self.update_pose()
 
     def on_R3_down(self, value):
-   
-        #event_queue.put("update_pose")
+
         self.pitch = int(value*config['pose_factor'] / 32767)
         self.update_pose()
 
     def on_R3_left(self, value):
-         #event_queue.put("update_pose")
          self.roll = int(value*config['pose_factor'] / 32767)
          self.update_pose()
 
     def on_R3_right(self, value): 
-        #event_queue.put("update_pose")
         self.roll = int(value*config['pose_factor'] / 32767)
         self.update_pose()
 
     def on_L2_press(self, value):
         self.yaw = int(25*(32767+value) / (2*32767))
-        #print(value,self.yaw)
         self.update_pose()
    
     def on_R2_press(self, value):
         #print(value)
         self.yaw = int(-25*(32767+value) / (2*32767))
-        #print(value,self.yaw)
         self.update_pose()
 
     def on_R3_y_at_rest(self): self.pitch = 0; self.update_pose()
