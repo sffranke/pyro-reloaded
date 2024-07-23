@@ -35,7 +35,7 @@ class SpotMicro:
             from adafruit_servokit import ServoKit
             self.kit = ServoKit(channels=16)
 
-        self.stopwalk = True
+        self.stop = True
         self.total_time = 1
         self.height = 0.18
         
@@ -320,11 +320,11 @@ class SpotMicro:
     
     def walk(self, total_time, repetitions, radii, steps, gait_pattern, overlap_times, swing_heights, swing_time_ratios, angle=0):
         leg_names = ["front_right", "back_right", "back_left", "front_left"]
-        print("walk....")
+        
         self.total_time = total_time
         self.stepwidth = radii 
         self.angle = angle
-
+        
         start_time_offsets = self.calculate_start_time_offsets(gait_pattern)
        
         for n in range(repetitions):
@@ -337,12 +337,15 @@ class SpotMicro:
                 else:
                     radius = self.stepwidth[i]
                     
+                print("walk.... angle:", self.angle)    
                 positions = self.getpositions(positions, leg_name, self.kinematics.desired_p4_points[i], steps, radius, start_time_offsets[i], swing_heights[i], swing_time_ratios[i], self.angle)
                     
             if self.stopwalk:
                 return
             start_time = time.time()
             for step in range(steps):
+                if self.stopwalk:
+                    return
                 mypoints = []
                 for i, leg_name in enumerate(leg_names):
                     p = positions[leg_name][step]
