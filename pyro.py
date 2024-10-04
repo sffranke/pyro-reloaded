@@ -127,6 +127,11 @@ def start_controller(walker, c):
     controller.listen()
 
 def main():
+    # Starte den Sensor-Thread
+    #sensor_thread_instance = threading.Thread(target=sensor_thread)
+    #sensor_thread_instance.daemon = True  # Damit der Thread endet, wenn das Hauptprogramm endet
+    #sensor_thread_instance.start()
+    
     global mode
     if mode != 'real':
         fig = plt.figure()
@@ -181,6 +186,15 @@ def main():
         print("                 P: exit")
         
         while True:
+            '''
+            with sensor_lock:
+                current_pitch = pitch_data
+                current_roll = roll_data
+
+                # Gebe die aktuellen Pitch- und Roll-Werte aus
+                print(f"Aktueller Pitch: {current_pitch:.2f}°, Aktueller Roll: {current_roll:.2f}°")
+            '''
+
             if not event_queue.empty():
                 event = event_queue.get()
                 current_state = stateobj.get_state()
