@@ -3,6 +3,7 @@ import json
 import socket
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
 from spot_micro_kinematics_python.utilities import spot_micro_kinematics as smk
 from spot_micro_kinematics import SpotMicroKinematics
 from config_loader import load_config
@@ -10,15 +11,43 @@ from config_loader import load_config
 import socket
 import json
 
+from read_mpu6050 import MPU6050SensorKalman
+
+# Globale Variablen für die Sensordaten
+pitch_data = 0.0
+roll_data = 0.0
+thread_running = False
+
+# Lock für den Thread-Schutz
+
+sensor_lock = threading.Lock()
+
+def sensor_thread():
+    global pitch_data, roll_data
+    sensor = MPU6050SensorKalman() 
+
+    while True:
+        roll_abs, pitch_abs = sensor.get_absolute_angles()
+
+        with sensor_lock:
+            pitch_data = pitch_abs
+            roll_data = roll_abs
+
+        time.sleep(0.1)  # Warte kurz, bevor neue Daten erfasst werden
 
 plt.ion()
 config = load_config()
 
 class SpotMicro:
+
+    sensor_thread_instance = threading.Thread(target=sensor_thread)
+    sensor_thread_instance.daemon = True  
+    sensor_thread_instance.start()
     
     def __init__(self, mode, ax):
         self.kinematics = SpotMicroKinematics()
         self.mode = mode
+        self.stopwalk=True
         self.ax = ax
         self.kinematics.sm.set_body_angles(theta=5 * self.kinematics.d2r)
         coords = self.kinematics.sm.get_leg_coordinates()
@@ -67,6 +96,14 @@ class SpotMicro:
             self.kit.servo[i].angle = None
 
     def control_servos(self, angles):
+        if (thread_running==False):
+            global pitch_data, pitch_data, sensor_lock
+            with sensor_lock:
+                current_pitch = pitch_data
+                current_roll = roll_data
+                thread_running==True
+                print(f"Aktueller Pitch: {current_pitch:.2f}°, Aktueller Roll: {current_roll:.2f}°")
+    
         '''Controls the servos based on the received angles.'''
         if len(angles) != 4:
             logging.error("Invalid number of angle sets received. Expected 4 sets of angles.")
@@ -108,7 +145,6 @@ class SpotMicro:
         lr_coxa_pin = 13
         lr_tibia_pin = 14
         lr_femur_pin = 15
-        
         
         servo_angles = [
             (rr_coxa_pin, 90 + rotations[0][0] * (angle[0][0] + corrections[0][0])),  # RR coxa
