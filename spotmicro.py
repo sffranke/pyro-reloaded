@@ -96,13 +96,7 @@ class SpotMicro:
             self.kit.servo[i].angle = None
 
     def control_servos(self, angles):
-        if (thread_running==False):
-            global pitch_data, pitch_data, sensor_lock
-            with sensor_lock:
-                current_pitch = pitch_data
-                current_roll = roll_data
-                thread_running==True
-                print(f"Aktueller Pitch: {current_pitch:.2f}°, Aktueller Roll: {current_roll:.2f}°")
+        
     
         '''Controls the servos based on the received angles.'''
         if len(angles) != 4:
@@ -167,6 +161,26 @@ class SpotMicro:
         for servo, angle in servo_angles:
             self.kit.servo[servo].angle = angle
         
+        if (thread_running==False):
+            global pitch_data, pitch_data, sensor_lock
+            with sensor_lock:
+                current_pitch = pitch_data
+                current_roll = roll_data
+                thread_running==True
+                print(f"Aktueller Pitch: {current_pitch:.2f}°, Aktueller Roll: {current_roll:.2f}°")
+                self.kinematics.sm.set_body_angles(phi=current_roll* self.kinematics.d2r, theta=current_pitch * self.kinematics.d2r)
+                #coords = self.get_current_coords()
+                #self.update_lines(coords)
+                #### hier self.kinematics.sm.set_body_angles(theta=5 * self.kinematics.d2r)
+                '''
+                def set_body_angles(self,phi=0,theta=0,psi=0):
+                Set a body angles without translation of the body
+
+                Args:
+                phi: roll angle in radians
+                theta: pitch angle in radians
+                psi: yaw angle in radians
+                '''
     
     ####
     
